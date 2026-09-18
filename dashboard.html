@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRADNEX Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #05080d;
+      color: #f5f7fa;
+      min-height: 100vh;
+    }
+
+    header {
+      height: 70px;
+      border-bottom: 1px solid #17212c;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      background: #070b11;
+    }
+
+    .logo {
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .logo span {
+      color: #42e58b;
+    }
+
+    .user-area {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    #userEmail {
+      color: #9caabd;
+      font-size: 14px;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 11px 18px;
+      font-weight: 700;
+    }
+
+    .logout {
+      background: #121a24;
+      color: white;
+      border: 1px solid #263545;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 35px 20px 60px;
+    }
+
+    .welcome {
+      margin-bottom: 28px;
+    }
+
+    .welcome small {
+      color: #42e58b;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .welcome h1 {
+      font-size: 34px;
+      margin-top: 8px;
+    }
+
+    .welcome p {
+      color: #8e9caf;
+      margin-top: 8px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: #0a1018;
+      border: 1px solid #1a2938;
+      border-radius: 14px;
+      padding: 22px;
+    }
+
+    .card-title {
+      color: #7f8da0;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .card-value {
+      font-size: 23px;
+      font-weight: 800;
+    }
+
+    .green {
+      color: #42e58b;
+    }
+
+    .signal-panel {
+      background: #0a1018;
+      border: 1px solid #1a2938;
+      border-radius: 14px;
+      padding: 24px;
+    }
+
+    .panel-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .panel-heading h2 {
+      font-size: 21px;
+    }
+
+    .live {
+      color: #42e58b;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .signal {
+      border: 1px solid #1b2b3b;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      background: #080e15;
+    }
+
+    .signal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .direction-buy {
+      color: #42e58b;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .direction-sell {
+      color: #ff5d6c;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .status {
+      padding: 6px 10px;
+      border-radius: 20px;
+      background: #14251d;
+      color: #42e58b;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .values {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+
+    .value-box {
+      background: #0d141d;
+      padding: 13px;
+      border-radius: 8px;
+    }
+
+    .value-box small {
+      display: block;
+      color: #748296;
+      margin-bottom: 6px;
+    }
+
+    .value-box strong {
+      font-size: 15px;
+    }
+
+    .empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #78869a;
+    }
+
+    .error {
+      color: #ff6977;
+      text-align: center;
+      padding: 25px;
+    }
+
+    @media (max-width: 800px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .values {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      header {
+        padding: 0 15px;
+      }
+
+      #userEmail {
+        display: none;
+      }
+
+      .welcome h1 {
+        font-size: 27px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo"><span>●</span> TRADNEX</div>
+
+  <div class="user-area">
+    <span id="userEmail">Loading...</span>
+    <button class="logout" id="logoutBtn">Logout</button>
+  </div>
+</header>
+
+<main>
+
+  <section class="welcome">
+    <small>4H → 15M • XAUUSD</small>
+    <h1 id="welcomeName">Your Trading Dashboard</h1>
+    <p>Real TRADNEX signals and account information.</p>
+  </section>
+
+  <section class="cards">
+
+    <div class="card">
+      <div class="card-title">ACCOUNT</div>
+      <div class="card-value" id="accountEmail">Loading...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">PLAN</div>
+      <div class="card-value green" id="plan">FREE</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">SIGNAL STATUS</div>
+      <div class="card-value green" id="signalStatus">LIVE</div>
+    </div>
+
+  </section>
+
+  <section class="signal-panel">
+
+    <div class="panel-heading">
+      <h2>TRADNEX Signals</h2>
+      <span class="live">● LIVE</span>
+    </div>
+
+    <div id="signals">
+      <div class="empty">Loading signals...</div>
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+  const SUPABASE_URL = "https://jgapathoxwkojfecqbdi.supabase.co";
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_uwfsQ-4Fod_rpoGlq6KbGg_VFj2TSGS";
+
+  const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function formatPrice(value) {
+    if (value === null || value === undefined || value === "") {
+      return "—";
+    }
+
+    return Number(value).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  async function loadDashboard() {
+
+    const {
+      data: { user },
+      error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+      window.location.href = "/";
+      return;
+    }
+
+    document.getElementById("userEmail").textContent = user.email || "";
+    document.getElementById("accountEmail").textContent = user.email || "";
+
+    const profileResult = await supabaseClient
+      .from("profiles")
+      .select("full_name, plan")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileResult.data) {
+
+      const name =
+        profileResult.data.full_name ||
+        user.email ||
+        "Trader";
+
+      document.getElementById("welcomeName").textContent =
+        "Welcome, " + name;
+
+      document.getElementById("plan").textContent =
+        (profileResult.data.plan || "free").toUpperCase();
+    }
+
+    const subscriptionResult = await supabaseClient
+      .from("subscriptions")
+      .select("plan, status, expires_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (subscriptionResult.data &&
+        subscriptionResult.data.status === "active") {
+
+      document.getElementById("plan").textContent =
+        subscriptionResult.data.plan.toUpperCase();
+    }
+
+    await loadSignals();
+  }
+
+  async function loadSignals() {
+
+    const container = document.getElementById("signals");
+
+    const {
+      data,
+      error
+    } = await supabaseClient
+      .from("signals")
+      .select(
+        "id,symbol,direction,timeframe,entry,stop_loss,take_profit,status,message,created_at"
+      )
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) {
+      container.innerHTML =
+        '<div class="error">Unable to load signals.</div>';
+      console.error(error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      container.innerHTML =
+        '<div class="empty">No TRADNEX signals have been published yet.</div>';
+      return;
+    }
+
+    container.innerHTML = data.map(signal => {
+
+      const directionClass =
+        signal.direction === "BUY"
+          ? "direction-buy"
+          : "direction-sell";
+
+      return `
+        <div class="signal">
+
+          <div class="signal-top">
+
+            <div>
+              <div class="${directionClass}">
+                ${escapeHtml(signal.symbol)} — ${escapeHtml(signal.direction)}
+              </div>
+
+              <small style="color:#78869a">
+                ${escapeHtml(signal.timeframe || "15M")}
+              </small>
+            </div>
+
+            <span class="status">
+              ${escapeHtml(signal.status || "ACTIVE")}
+            </span>
+
+          </div>
+
+          <div class="values">
+
+            <div class="value-box">
+              <small>ENTRY</small>
+              <strong>${formatPrice(signal.entry)}</strong>
+            </div>
+
+            <div class="value-box">
+              <small>STOP LOSS</small>
+              <strong>${formatPrice(signal.stop_loss)}</strong>
+            </div>
+
+            <div class="value-box">
+              <small>TAKE PROFIT</small>
+              <strong>${formatPrice(signal.take_profit)}</strong>
+            </div>
+
+            <div class="value-box">
+              <small>TIME</small>
+              <strong>
+                ${new Date(signal.created_at).toLocaleTimeString()}
+              </strong>
+            </div>
+
+          </div>
+
+          ${
+            signal.message
+              ? `<p style="margin-top:15px;color:#8e9caf">
+                   ${escapeHtml(signal.message)}
+                 </p>`
+              : ""
+          }
+
+        </div>
+      `;
+
+    }).join("");
+  }
+
+  document.getElementById("logoutBtn").onclick = async () => {
+
+    await supabaseClient.auth.signOut();
+
+    window.location.href = "/";
+  };
+
+  supabaseClient
+    .channel("tradnex-live-signals")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "signals"
+      },
+      () => {
+        loadSignals();
+      }
+    )
+    .subscribe();
+
+  loadDashboard();
+</script>
+
+</body>
+</html>
