@@ -2,31 +2,71 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SUPABASE_URL = "https://jgapathoxwkojfecqbdi.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_uwfsQ-4Fod_rpoGlq6KbGg_VFj2TSGS";
-const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
 const modal = document.getElementById("modal");
 const box = document.getElementById("modalContent");
 
 function openModal(type) {
+  if (!modal || !box) return;
+
   modal.style.display = "flex";
+
   if (type === "login") {
     box.innerHTML = `
       <h2>Welcome back</h2>
       <p class="note">Log in to your TRADNEX account.</p>
-      <div class="field"><label>Email</label><input id="loginEmail" type="email" placeholder="you@example.com"></div>
-      <div class="field"><label>Password</label><input id="loginPassword" type="password" placeholder="Your password"></div>
+
+      <div class="field">
+        <label>Email</label>
+        <input id="loginEmail" type="email" placeholder="you@example.com">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input id="loginPassword" type="password" placeholder="Your password">
+      </div>
+
       <p id="authMessage" class="note"></p>
-      <button class="primary full" id="loginBtn">Login</button>`;
+
+      <button class="primary full" id="loginBtn">
+        Login
+      </button>
+    `;
+
     document.getElementById("loginBtn").onclick = login;
+
   } else {
     box.innerHTML = `
       <h2>Create your account</h2>
       <p class="note">Start free and upgrade when ready.</p>
-      <div class="field"><label>Full name</label><input id="signupName" placeholder="Your name"></div>
-      <div class="field"><label>Email</label><input id="signupEmail" type="email" placeholder="you@example.com"></div>
-      <div class="field"><label>Password</label><input id="signupPassword" type="password" placeholder="At least 6 characters"></div>
+
+      <div class="field">
+        <label>Full name</label>
+        <input id="signupName" placeholder="Your name">
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input id="signupEmail" type="email" placeholder="you@example.com">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input id="signupPassword" type="password" placeholder="At least 6 characters">
+      </div>
+
       <p id="authMessage" class="note"></p>
-      <button class="primary full" id="signupBtn">Create account</button>`;
+
+      <button class="primary full" id="signupBtn">
+        Create account
+      </button>
+    `;
+
     document.getElementById("signupBtn").onclick = signup;
   }
 }
@@ -39,7 +79,8 @@ async function signup() {
   const button = document.getElementById("signupBtn");
 
   if (!name || !email || password.length < 6) {
-    message.textContent = "Enter your name, a valid email and a password of at least 6 characters.";
+    message.textContent =
+      "Enter your name, a valid email and a password of at least 6 characters.";
     return;
   }
 
@@ -49,7 +90,11 @@ async function signup() {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: name } }
+    options: {
+      data: {
+        full_name: name
+      }
+    }
   });
 
   button.disabled = false;
@@ -61,9 +106,15 @@ async function signup() {
 
   if (data.session) {
     message.textContent = "Account created. You are now logged in.";
-    setTimeout(() => { closeModal(); updateAuthUI(data.session.user); }, 700);
+
+    setTimeout(() => {
+      closeModal();
+      updateAuthUI(data.session.user);
+    }, 700);
+
   } else {
-    message.textContent = "Account created. Check your email to confirm your account, then log in.";
+    message.textContent =
+      "Account created. Check your email to confirm your account, then log in.";
   }
 }
 
@@ -81,7 +132,11 @@ async function login() {
   button.disabled = true;
   message.textContent = "Signing in...";
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
   button.disabled = false;
 
@@ -91,48 +146,132 @@ async function login() {
   }
 
   closeModal();
+
   updateAuthUI(data.user);
-  alert("Welcome to TRADNEX, " + (data.user.user_metadata?.full_name || data.user.email) + "!");
+
+  alert(
+    "Welcome to TRADNEX, " +
+    (data.user.user_metadata?.full_name || data.user.email) +
+    "!"
+  );
 }
 
 async function logout() {
-  await supabase.auth.signOut();
- container.innerHTML = `<button class="ghost" id="logoutBtn">Logout</button><button class="primary" onclick="window.location.href='dashboard.html'">Dashboard</button>`;
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  updateAuthUI(null);
 }
 
 function updateAuthUI(user) {
   const buttons = document.querySelectorAll("header .nav > div");
+
   if (!buttons.length) return;
+
   const container = buttons[0];
+
   if (user) {
- container.innerHTML = `<button class="ghost" id="logoutBtn">Logout</button><button class="primary" onclick="window.location.href='dashboard.html'">Dashboard</button>`;
-    document.getElementById("logoutBtn").onclick = logout;
+    container.innerHTML = `
+      <button class="ghost" id="logoutBtn">
+        Logout
+      </button>
+
+      <button
+        class="primary"
+        onclick="window.location.href='dashboard.html'"
+      >
+        Dashboard
+      </button>
+    `;
+
+    const logoutButton = document.getElementById("logoutBtn");
+
+    if (logoutButton) {
+      logoutButton.onclick = logout;
+    }
+
   } else {
-    container.innerHTML = `<button onclick="openModal('login')" class="ghost">Login</button><button onclick="openModal('signup')" class="primary">Get Started</button>`;
+    container.innerHTML = `
+      <button
+        onclick="openModal('login')"
+        class="ghost"
+      >
+        Login
+      </button>
+
+      <button
+        onclick="openModal('signup')"
+        class="primary"
+      >
+        Get Started
+      </button>
+    `;
   }
 }
 
 async function loadCurrentUser() {
   const { data } = await supabase.auth.getUser();
+
   updateAuthUI(data.user || null);
 }
 
 async function checkout(plan) {
   const { data } = await supabase.auth.getUser();
+
   if (!data.user) {
     openModal("login");
-    document.getElementById("authMessage").textContent = "Please log in before choosing a paid plan.";
+
+    const message = document.getElementById("authMessage");
+
+    if (message) {
+      message.textContent =
+        "Please log in before choosing a paid plan.";
+    }
+
     return;
   }
+
   modal.style.display = "flex";
-  box.innerHTML = `<h2>${plan} plan</h2><p class="note">Payments will be connected next. Your account is ready for subscription activation.</p><button class="primary full" onclick="closeModal()">Close</button>`;
+
+  box.innerHTML = `
+    <h2>${plan} plan</h2>
+
+    <p class="note">
+      Payments will be connected next.
+      Your account is ready for subscription activation.
+    </p>
+
+    <button
+      class="primary full"
+      onclick="closeModal()"
+    >
+      Close
+    </button>
+  `;
 }
 
-function closeModal() { modal.style.display = "none"; }
+function closeModal() {
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.checkout = checkout;
-window.onclick = e => { if (e.target === modal) closeModal(); };
 
-supabase.auth.onAuthStateChange((_event, session) => updateAuthUI(session?.user || null));
+window.onclick = function (event) {
+  if (event.target === modal) {
+    closeModal();
+  }
+};
+
+supabase.auth.onAuthStateChange((_event, session) => {
+  updateAuthUI(session?.user || null);
+});
+
 loadCurrentUser();
