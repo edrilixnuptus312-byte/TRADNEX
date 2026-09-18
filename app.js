@@ -97,7 +97,7 @@ async function login() {
 
 async function logout() {
   await supabase.auth.signOut();
-  updateAuthUI(null);
+ container.innerHTML = `<button class="ghost" id="logoutBtn">Logout</button><button class="primary" onclick="window.location.href='dashboard.html'">Dashboard</button>`;
 }
 
 function updateAuthUI(user) {
