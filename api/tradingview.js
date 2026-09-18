@@ -68,13 +68,11 @@ export default async function handler(req, res) {
       `${process.env.SUPABASE_URL}/rest/v1/signals`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY,
-          "Authorization":
-            `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-          "Prefer": "return=representation"
-        },
+headers: {
+  "Content-Type": "application/json",
+  "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY,
+  "Prefer": "return=representation"
+},
         body: JSON.stringify(signal)
       }
     );
