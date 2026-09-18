@@ -168,7 +168,7 @@ async function logout() {
 }
 
 function updateAuthUI(user) {
-  const buttons = document.querySelectorAll("header .nav > div");
+ const buttons = document.querySelectorAll("header.nav > div");
 
   if (!buttons.length) return;
 
