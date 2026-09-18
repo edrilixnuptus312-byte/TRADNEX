@@ -8,3 +8,4 @@ Authentication, real payment processing, subscription webhooks, TradingView webh
 
 ## Supabase authentication update
 This version connects signup/login to the TRADNEX Supabase project. The browser uses the Supabase publishable key; never place a secret key in frontend code.
+TRADNEX Supabase deployment
