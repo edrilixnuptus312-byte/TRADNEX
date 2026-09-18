@@ -6,15 +6,44 @@ export default async function handler(req, res) {
   }
 
   try {
-    const secret = req.headers["x-tradnex-secret"];
+    // TradingView official webhook IP addresses
+    const trustedTradingViewIPs = new Set([
+      "52.89.214.238",
+      "34.212.75.30",
+      "54.218.53.128",
+      "52.32.178.7"
+    ]);
 
-    if (!secret || secret !== process.env.TRADNEX_WEBHOOK_SECRET) {
+    // Get the original client IP through the Vercel proxy
+    const forwardedFor = req.headers["x-forwarded-for"] || "";
+    const clientIP = forwardedFor.split(",")[0].trim();
+
+    // Keep secret-header authentication for manual testing
+    const manualSecret = req.headers["x-tradnex-secret"];
+
+    const validTradingViewIP = trustedTradingViewIPs.has(clientIP);
+    const validManualSecret =
+      manualSecret &&
+      manualSecret === process.env.TRADNEX_WEBHOOK_SECRET;
+
+    if (!validTradingViewIP && !validManualSecret) {
       return res.status(401).json({
         error: "Unauthorized"
       });
     }
 
-    const body = req.body || {};
+    // TradingView sends JSON in the request body
+    let body = req.body || {};
+
+    if (typeof body === "string") {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        return res.status(400).json({
+          error: "Invalid JSON body"
+        });
+      }
+    }
 
     const signal = {
       symbol: body.symbol || "XAUUSD",
