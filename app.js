@@ -149,11 +149,7 @@ async function login() {
 
   updateAuthUI(data.user);
 
-  alert(
-    "Welcome to TRADNEX, " +
-    (data.user.user_metadata?.full_name || data.user.email) +
-    "!"
-  );
+
 }
 
 async function logout() {
