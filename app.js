@@ -105,7 +105,7 @@ function updateAuthUI(user) {
   if (!buttons.length) return;
   const container = buttons[0];
   if (user) {
-    container.innerHTML = `<button class="ghost" id="logoutBtn">Logout</button><button class="primary" onclick="document.getElementById('dashboard').scrollIntoView({behavior:'smooth'})">Dashboard</button>`;
+    container.innerHTML = `<buttoncontainer.innerHTML = `<button class="ghost" id="logoutBtn">Logout</button><button class="primary" onclick="window.location.href='dashboard.html'">Dashboard</button>`;rHTML = `<button class="ghost" id="logoutBtn">Logout</button><button class="primary" onclick="window.location.href='dashboard.html'">Dashboard</button>`;({behavior:'smooth'})">Dashboard</button>`;
     document.getElementById("logoutBtn").onclick = logout;
   } else {
     container.innerHTML = `<button onclick="openModal('login')" class="ghost">Login</button><button onclick="openModal('signup')" class="primary">Get Started</button>`;
