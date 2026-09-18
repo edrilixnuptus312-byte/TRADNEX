@@ -1,242 +1,515 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TRADNEX Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRADNEX | Trading Dashboard</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
 
-    body {
-      font-family: Arial, sans-serif;
-      background: #05080d;
-      color: #f5f7fa;
-      min-height: 100vh;
-    }
+html{
+  scroll-behavior:smooth;
+}
 
-    header {
-      height: 70px;
-      border-bottom: 1px solid #17212c;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 28px;
-      background: #070b11;
-    }
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#05080d;
+  color:#f5f7fa;
+  min-height:100vh;
+}
 
-    .logo {
-      font-size: 21px;
-      font-weight: 800;
-      letter-spacing: 2px;
-    }
+button,a{
+  font:inherit;
+}
 
-    .logo span {
-      color: #42e58b;
-    }
+button{
+  cursor:pointer;
+}
 
-    .user-area {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
+header{
+  height:70px;
+  background:#070b11;
+  border-bottom:1px solid #17212c;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 28px;
+  position:sticky;
+  top:0;
+  z-index:50;
+}
 
-    #userEmail {
-      color: #9caabd;
-      font-size: 14px;
-    }
+.logo{
+  font-size:21px;
+  font-weight:800;
+  letter-spacing:2px;
+}
 
-    button {
-      border: 0;
-      cursor: pointer;
-      border-radius: 8px;
-      padding: 11px 18px;
-      font-weight: 700;
-    }
+.logo span{
+  color:#42e58b;
+}
 
-    .logout {
-      background: #121a24;
-      color: white;
-      border: 1px solid #263545;
-    }
+.user-area{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
 
-    main {
-      max-width: 1200px;
-      margin: auto;
-      padding: 35px 20px 60px;
-    }
+#userEmail{
+  color:#8e9caf;
+  font-size:13px;
+}
 
-    .welcome {
-      margin-bottom: 28px;
-    }
+.logout{
+  background:#111923;
+  border:1px solid #263545;
+  color:white;
+  border-radius:8px;
+  padding:10px 16px;
+  font-weight:700;
+}
 
-    .welcome small {
-      color: #42e58b;
-      font-weight: 700;
-      letter-spacing: 1px;
-    }
+.layout{
+  display:grid;
+  grid-template-columns:230px 1fr;
+  min-height:calc(100vh - 70px);
+}
 
-    .welcome h1 {
-      font-size: 34px;
-      margin-top: 8px;
-    }
+.sidebar{
+  background:#070b11;
+  border-right:1px solid #17212c;
+  padding:24px 15px;
+  position:sticky;
+  top:70px;
+  height:calc(100vh - 70px);
+}
 
-    .welcome p {
-      color: #8e9caf;
-      margin-top: 8px;
-    }
+.sidebar-title{
+  color:#42e58b;
+  font-weight:800;
+  font-size:13px;
+  letter-spacing:1.5px;
+  padding:10px 13px 18px;
+}
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      margin-bottom: 25px;
-    }
+.menu{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
 
-    .card {
-      background: #0a1018;
-      border: 1px solid #1a2938;
-      border-radius: 14px;
-      padding: 22px;
-    }
+.menu a{
+  text-decoration:none;
+  color:#8e9caf;
+  padding:12px 13px;
+  border-radius:8px;
+  font-size:14px;
+  font-weight:700;
+  transition:.2s;
+}
 
-    .card-title {
-      color: #7f8da0;
-      font-size: 13px;
-      margin-bottom: 10px;
-    }
+.menu a:hover,
+.menu a.active{
+  background:#102019;
+  color:#42e58b;
+}
 
-    .card-value {
-      font-size: 23px;
-      font-weight: 800;
-    }
+.content{
+  max-width:1250px;
+  width:100%;
+  margin:auto;
+  padding:30px 28px 60px;
+}
 
-    .green {
-      color: #42e58b;
-    }
+.section{
+  scroll-margin-top:95px;
+  margin-bottom:30px;
+}
 
-    .signal-panel {
-      background: #0a1018;
-      border: 1px solid #1a2938;
-      border-radius: 14px;
-      padding: 24px;
-    }
+.eyebrow{
+  color:#42e58b;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:1.5px;
+  margin-bottom:8px;
+}
 
-    .panel-heading {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 22px;
-    }
+h1{
+  font-size:32px;
+  margin-bottom:8px;
+}
 
-    .panel-heading h2 {
-      font-size: 21px;
-    }
+h2{
+  font-size:21px;
+}
 
-    .live {
-      color: #42e58b;
-      font-size: 13px;
-      font-weight: 700;
-    }
+.subtitle{
+  color:#8996a8;
+  font-size:14px;
+  line-height:1.6;
+}
 
-    .signal {
-      border: 1px solid #1b2b3b;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 15px;
-      background: #080e15;
-    }
+.top-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:15px;
+  margin-top:25px;
+}
 
-    .signal-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-    }
+.card{
+  background:#0a1018;
+  border:1px solid #1a2938;
+  border-radius:14px;
+  padding:20px;
+}
 
-    .direction-buy {
-      color: #42e58b;
-      font-size: 20px;
-      font-weight: 800;
-    }
+.card-label{
+  color:#748296;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:1px;
+  margin-bottom:9px;
+}
 
-    .direction-sell {
-      color: #ff5d6c;
-      font-size: 20px;
-      font-weight: 800;
-    }
+.card-value{
+  font-size:21px;
+  font-weight:800;
+}
 
-    .status {
-      padding: 6px 10px;
-      border-radius: 20px;
-      background: #14251d;
-      color: #42e58b;
-      font-size: 12px;
-      font-weight: 700;
-    }
+.green{
+  color:#42e58b;
+}
 
-    .values {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
-    }
+.red{
+  color:#ff5d6c;
+}
 
-    .value-box {
-      background: #0d141d;
-      padding: 13px;
-      border-radius: 8px;
-    }
+.blue{
+  color:#63a9ff;
+}
 
-    .value-box small {
-      display: block;
-      color: #748296;
-      margin-bottom: 6px;
-    }
+.signal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+}
 
-    .value-box strong {
-      font-size: 15px;
-    }
+.live{
+  color:#42e58b;
+  font-size:12px;
+  font-weight:800;
+}
 
-    .empty {
-      padding: 40px 20px;
-      text-align: center;
-      color: #78869a;
-    }
+.signal-card{
+  background:#0a1018;
+  border:1px solid #1a2938;
+  border-radius:15px;
+  padding:22px;
+  margin-bottom:16px;
+}
 
-    .error {
-      color: #ff6977;
-      text-align: center;
-      padding: 25px;
-    }
+.signal-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  margin-bottom:20px;
+}
 
-    @media (max-width: 800px) {
-      .cards {
-        grid-template-columns: 1fr;
-      }
+.signal-symbol{
+  color:#fff;
+  font-size:22px;
+  font-weight:800;
+}
 
-      .values {
-        grid-template-columns: repeat(2, 1fr);
-      }
+.signal-direction{
+  font-size:25px;
+  font-weight:900;
+  margin-top:5px;
+}
 
-      header {
-        padding: 0 15px;
-      }
+.badge{
+  border-radius:20px;
+  padding:7px 12px;
+  background:#14251d;
+  color:#42e58b;
+  font-size:11px;
+  font-weight:800;
+}
 
-      #userEmail {
-        display: none;
-      }
+.confidence{
+  min-width:115px;
+  text-align:center;
+  background:#0d151d;
+  border:1px solid #213244;
+  border-radius:12px;
+  padding:12px;
+}
 
-      .welcome h1 {
-        font-size: 27px;
-      }
-    }
-  </style>
+.confidence small{
+  display:block;
+  color:#748296;
+  font-size:10px;
+  font-weight:800;
+  margin-bottom:5px;
+}
+
+.confidence strong{
+  font-size:24px;
+  color:#42e58b;
+}
+
+.price-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+
+.price-box{
+  background:#0d141d;
+  border-radius:9px;
+  padding:14px;
+}
+
+.price-box small{
+  display:block;
+  color:#748296;
+  font-size:10px;
+  font-weight:800;
+  margin-bottom:7px;
+}
+
+.price-box strong{
+  font-size:15px;
+}
+
+.setup{
+  margin-top:18px;
+  background:#080e15;
+  border:1px solid #192a3a;
+  border-radius:12px;
+  padding:17px;
+}
+
+.setup-title{
+  font-size:13px;
+  font-weight:800;
+  margin-bottom:12px;
+}
+
+.setup-flow{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+.setup-step{
+  background:#0d141d;
+  border-radius:9px;
+  padding:13px;
+}
+
+.setup-step small{
+  display:block;
+  color:#42e58b;
+  font-size:10px;
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.setup-step p{
+  color:#9ba7b7;
+  font-size:12px;
+  line-height:1.5;
+}
+
+.empty{
+  text-align:center;
+  padding:50px 20px;
+  color:#78869a;
+  background:#0a1018;
+  border:1px solid #1a2938;
+  border-radius:14px;
+}
+
+.panel{
+  background:#0a1018;
+  border:1px solid #1a2938;
+  border-radius:14px;
+  padding:23px;
+}
+
+.strategy-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+  margin-top:18px;
+}
+
+.rule{
+  background:#0d141d;
+  border:1px solid #1b2b3b;
+  border-radius:10px;
+  padding:17px;
+}
+
+.rule h3{
+  font-size:14px;
+  margin-bottom:7px;
+}
+
+.rule p{
+  color:#8e9caf;
+  font-size:13px;
+  line-height:1.6;
+}
+
+.table-wrap{
+  overflow-x:auto;
+  margin-top:16px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:650px;
+}
+
+th,td{
+  text-align:left;
+  padding:14px;
+  border-bottom:1px solid #182634;
+  font-size:13px;
+}
+
+th{
+  color:#748296;
+  font-size:10px;
+  letter-spacing:1px;
+}
+
+.settings{
+  display:grid;
+  gap:12px;
+}
+
+.setting{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#0d141d;
+  border-radius:10px;
+  padding:16px;
+}
+
+.setting span{
+  color:#8e9caf;
+  font-size:13px;
+}
+
+.status-dot{
+  color:#42e58b;
+  font-weight:800;
+}
+
+.note{
+  color:#748296;
+  font-size:12px;
+  line-height:1.6;
+  margin-top:14px;
+}
+
+@media(max-width:950px){
+  .top-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .layout{
+    grid-template-columns:190px 1fr;
+  }
+}
+
+@media(max-width:700px){
+  header{
+    padding:0 15px;
+  }
+
+  .layout{
+    display:block;
+  }
+
+  .sidebar{
+    position:static;
+    height:auto;
+    border-right:0;
+    border-bottom:1px solid #17212c;
+    padding:10px;
+  }
+
+  .sidebar-title{
+    display:none;
+  }
+
+  .menu{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+  }
+
+  .menu a{
+    text-align:center;
+    padding:10px 5px;
+    font-size:11px;
+  }
+
+  .content{
+    padding:22px 15px 50px;
+  }
+
+  h1{
+    font-size:26px;
+  }
+
+  .top-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .price-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .setup-flow,
+  .strategy-grid{
+    grid-template-columns:1fr;
+  }
+
+  .signal-top{
+    flex-direction:column;
+  }
+
+  #userEmail{
+    display:none;
+  }
+}
+
+@media(max-width:430px){
+  .menu{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .top-grid,
+  .price-grid{
+    grid-template-columns:1fr;
+  }
+}
+</style>
 </head>
 
 <body>
@@ -250,251 +523,709 @@
   </div>
 </header>
 
-<main>
+<div class="layout">
 
-  <section class="welcome">
-    <small>4H → 15M • XAUUSD</small>
-    <h1 id="welcomeName">Your Trading Dashboard</h1>
-    <p>Real TRADNEX signals and account information.</p>
-  </section>
+  <aside class="sidebar">
+    <div class="sidebar-title">TRADING TERMINAL</div>
 
-  <section class="cards">
+    <nav class="menu">
+      <a href="#overview" class="active">Overview</a>
+      <a href="#signals">Live Signals</a>
+      <a href="#open-trades">Open Trades</a>
+      <a href="#history">Trade History</a>
+      <a href="#strategy">Strategy</a>
+      <a href="#subscription">Subscription</a>
+      <a href="#settings">Settings</a>
+    </nav>
+  </aside>
 
-    <div class="card">
-      <div class="card-title">ACCOUNT</div>
-      <div class="card-value" id="accountEmail">Loading...</div>
-    </div>
+  <main class="content">
 
-    <div class="card">
-      <div class="card-title">PLAN</div>
-      <div class="card-value green" id="plan">FREE</div>
-    </div>
+    <!-- OVERVIEW -->
+    <section class="section" id="overview">
+      <div class="eyebrow">TRADNEX TERMINAL</div>
+      <h1 id="welcomeName">Your Trading Dashboard</h1>
+      <p class="subtitle">
+        4H → 15M XAUUSD signal system. Follow the setup, confirmation and risk levels.
+      </p>
 
-    <div class="card">
-      <div class="card-title">SIGNAL STATUS</div>
-      <div class="card-value green" id="signalStatus">LIVE</div>
-    </div>
+      <div class="top-grid">
 
-  </section>
+        <div class="card">
+          <div class="card-label">ACCOUNT</div>
+          <div class="card-value" id="accountEmail">Loading...</div>
+        </div>
 
-  <section class="signal-panel">
+        <div class="card">
+          <div class="card-label">PLAN</div>
+          <div class="card-value green" id="plan">FREE</div>
+        </div>
 
-    <div class="panel-heading">
-      <h2>TRADNEX Signals</h2>
-      <span class="live">● LIVE</span>
-    </div>
+        <div class="card">
+          <div class="card-label">SIGNAL ENGINE</div>
+          <div class="card-value green">LIVE</div>
+        </div>
 
-    <div id="signals">
-      <div class="empty">Loading signals...</div>
-    </div>
+        <div class="card">
+          <div class="card-label">STRATEGY</div>
+          <div class="card-value">4H → 15M</div>
+        </div>
 
-  </section>
+      </div>
+    </section>
 
-</main>
+
+    <!-- LIVE SIGNALS -->
+    <section class="section" id="signals">
+
+      <div class="signal-header">
+        <div>
+          <div class="eyebrow">MARKET SIGNALS</div>
+          <h2>Live TRADNEX Signals</h2>
+        </div>
+
+        <span class="live">● REAL-TIME</span>
+      </div>
+
+      <div id="signalsContainer">
+        <div class="empty">Loading live signals...</div>
+      </div>
+
+    </section>
+
+
+    <!-- OPEN TRADES -->
+    <section class="section" id="open-trades">
+
+      <div class="eyebrow">ACTIVE POSITIONS</div>
+      <h2>Open Trades</h2>
+
+      <div class="panel" style="margin-top:16px;">
+        <div class="empty">
+          No open trades yet.
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- HISTORY -->
+    <section class="section" id="history">
+
+      <div class="eyebrow">RECORDS</div>
+      <h2>Trade History</h2>
+
+      <div class="panel" style="margin-top:16px;">
+
+        <div class="table-wrap">
+
+          <table>
+            <thead>
+              <tr>
+                <th>SYMBOL</th>
+                <th>DIRECTION</th>
+                <th>ENTRY</th>
+                <th>RESULT</th>
+                <th>TIME</th>
+              </tr>
+            </thead>
+
+            <tbody id="historyBody">
+              <tr>
+                <td colspan="5" style="text-align:center;color:#78869a;">
+                  No trade history yet.
+                </td>
+              </tr>
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- STRATEGY -->
+    <section class="section" id="strategy">
+
+      <div class="eyebrow">TRADNEX METHOD</div>
+      <h2>4H → 15M Strategy</h2>
+
+      <div class="panel" style="margin-top:16px;">
+
+        <p class="subtitle">
+          TRADNEX is built around a higher-timeframe 4H structure
+          followed by 15M confirmation. The system does not use 5M confirmation.
+        </p>
+
+        <div class="strategy-grid">
+
+          <div class="rule">
+            <h3>01 — 4H Structure</h3>
+            <p>
+              Identify the completed 4H structure and its relevant high,
+              low and body levels.
+            </p>
+          </div>
+
+          <div class="rule">
+            <h3>02 — 15M Confirmation</h3>
+            <p>
+              Wait for a confirmed 15M candle close beyond the saved
+              structure level.
+            </p>
+          </div>
+
+          <div class="rule">
+            <h3>03 — BUY Setup</h3>
+            <p>
+              A BUY confirmation occurs when the confirmed 15M candle
+              closes above the relevant body structure.
+            </p>
+          </div>
+
+          <div class="rule">
+            <h3>04 — SELL Setup</h3>
+            <p>
+              A SELL confirmation occurs when the confirmed 15M candle
+              closes below the relevant body structure.
+            </p>
+          </div>
+
+        </div>
+
+        <p class="note">
+          Signal confidence will be supplied by the TRADNEX signal engine
+          using defined confirmation conditions. It will not be randomly generated.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- SUBSCRIPTION -->
+    <section class="section" id="subscription">
+
+      <div class="eyebrow">ACCOUNT ACCESS</div>
+      <h2>Subscription</h2>
+
+      <div class="panel" style="margin-top:16px;">
+
+        <div class="card-label">CURRENT PLAN</div>
+        <div class="card-value green" id="subscriptionPlan">FREE</div>
+
+        <p class="note">
+          Subscription controls will be connected to the TRADNEX payment
+          system after the live signal system is completed.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- SETTINGS -->
+    <section class="section" id="settings">
+
+      <div class="eyebrow">ACCOUNT</div>
+      <h2>Settings</h2>
+
+      <div class="panel" style="margin-top:16px;">
+
+        <div class="settings">
+
+          <div class="setting">
+            <span>Email</span>
+            <strong id="settingsEmail">Loading...</strong>
+          </div>
+
+          <div class="setting">
+            <span>Signal Feed</span>
+            <strong class="status-dot">● LIVE</strong>
+          </div>
+
+          <div class="setting">
+            <span>Primary Instrument</span>
+            <strong>XAUUSD</strong>
+          </div>
+
+          <div class="setting">
+            <span>Confirmation</span>
+            <strong>15M</strong>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
 
 <script>
-  const SUPABASE_URL = "https://jgapathoxwkojfecqbdi.supabase.co";
 
-  const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_uwfsQ-4Fod_rpoGlq6KbGg_VFj2TSGS";
+const SUPABASE_URL =
+  "https://jgapathoxwkojfecqbdi.supabase.co";
 
-  const supabaseClient = window.supabase.createClient(
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_uwfsQ-4Fod_rpoGlq6KbGg_VFj2TSGS";
+
+const supabaseClient =
+  window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_PUBLISHABLE_KEY
   );
 
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+
+function escapeHtml(value){
+
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
+}
+
+
+function formatPrice(value){
+
+  if(value === null ||
+     value === undefined ||
+     value === ""){
+
+    return "—";
+
   }
 
-  function formatPrice(value) {
-    if (value === null || value === undefined || value === "") {
-      return "—";
+  return Number(value).toLocaleString(
+    undefined,
+    {
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
     }
+  );
 
-    return Number(value).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+}
+
+
+function calculateRR(entry, stop, target){
+
+  if(entry === null ||
+     stop === null ||
+     target === null){
+
+    return "—";
+
   }
 
-  async function loadDashboard() {
+  const risk =
+    Math.abs(Number(entry) - Number(stop));
 
-    const {
-      data: { user },
-      error: userError
-    } = await supabaseClient.auth.getUser();
+  const reward =
+    Math.abs(Number(target) - Number(entry));
 
-    if (userError || !user) {
-      window.location.href = "/";
-      return;
-    }
+  if(!risk) return "—";
 
-    document.getElementById("userEmail").textContent = user.email || "";
-    document.getElementById("accountEmail").textContent = user.email || "";
+  return (reward / risk).toFixed(2) + "R";
 
-    const profileResult = await supabaseClient
+}
+
+
+function confidenceDisplay(signal){
+
+  /*
+    Confidence is intentionally NOT invented.
+    When the signal engine supplies a confidence
+    field, TRADNEX will display it here.
+  */
+
+  if(
+    signal.confidence !== undefined &&
+    signal.confidence !== null &&
+    signal.confidence !== ""
+  ){
+
+    return Math.round(Number(signal.confidence)) + "%";
+
+  }
+
+  return "PENDING";
+
+}
+
+
+function setupText(signal){
+
+  if(signal.message){
+
+    return signal.message;
+
+  }
+
+  if(signal.direction === "BUY"){
+
+    return "15M confirmation above saved body structure.";
+
+  }
+
+  if(signal.direction === "SELL"){
+
+    return "15M confirmation below saved body structure.";
+
+  }
+
+  return "Waiting for confirmed setup.";
+
+}
+
+
+function renderSignal(signal){
+
+  const buy =
+    signal.direction === "BUY";
+
+  const directionClass =
+    buy ? "green" : "red";
+
+  const confidence =
+    confidenceDisplay(signal);
+
+  const rr =
+    calculateRR(
+      signal.entry,
+      signal.stop_loss,
+      signal.take_profit
+    );
+
+  return `
+
+    <article class="signal-card">
+
+      <div class="signal-top">
+
+        <div>
+
+          <div class="signal-symbol">
+            ${escapeHtml(signal.symbol || "XAUUSD")}
+          </div>
+
+          <div class="signal-direction ${directionClass}">
+            ${escapeHtml(signal.direction || "—")}
+          </div>
+
+          <div class="subtitle">
+            ${escapeHtml(signal.timeframe || "15M")}
+          </div>
+
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+
+          <div class="confidence">
+            <small>CONFIDENCE</small>
+            <strong>${confidence}</strong>
+          </div>
+
+          <span class="badge">
+            ${escapeHtml(signal.status || "ACTIVE")}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="price-grid">
+
+        <div class="price-box">
+          <small>ENTRY</small>
+          <strong>${formatPrice(signal.entry)}</strong>
+        </div>
+
+        <div class="price-box">
+          <small>STOP LOSS</small>
+          <strong>${formatPrice(signal.stop_loss)}</strong>
+        </div>
+
+        <div class="price-box">
+          <small>TAKE PROFIT</small>
+          <strong>${formatPrice(signal.take_profit)}</strong>
+        </div>
+
+        <div class="price-box">
+          <small>RISK / REWARD</small>
+          <strong>${rr}</strong>
+        </div>
+
+      </div>
+
+
+      <div class="setup">
+
+        <div class="setup-title">
+          SETUP CONFIRMATION
+        </div>
+
+        <div class="setup-flow">
+
+          <div class="setup-step">
+            <small>4H</small>
+            <p>
+              Higher-timeframe structure identified.
+            </p>
+          </div>
+
+          <div class="setup-step">
+            <small>15M</small>
+            <p>
+              Confirmed candle close beyond structure.
+            </p>
+          </div>
+
+          <div class="setup-step">
+            <small>SIGNAL</small>
+            <p>
+              ${escapeHtml(setupText(signal))}
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="note">
+        ${signal.created_at
+          ? "Signal time: " +
+            escapeHtml(
+              new Date(signal.created_at).toLocaleString()
+            )
+          : ""}
+      </div>
+
+    </article>
+
+  `;
+
+}
+
+
+async function loadDashboard(){
+
+  const {
+    data:{user},
+    error:userError
+  } =
+    await supabaseClient.auth.getUser();
+
+  if(userError || !user){
+
+    window.location.href = "/";
+
+    return;
+
+  }
+
+
+  const email =
+    user.email || "";
+
+  document.getElementById(
+    "userEmail"
+  ).textContent = email;
+
+  document.getElementById(
+    "accountEmail"
+  ).textContent = email;
+
+  document.getElementById(
+    "settingsEmail"
+  ).textContent = email;
+
+
+  const profileResult =
+    await supabaseClient
       .from("profiles")
-      .select("full_name, plan")
-      .eq("id", user.id)
+      .select("full_name,plan")
+      .eq("id",user.id)
       .maybeSingle();
 
-    if (profileResult.data) {
 
-      const name =
-        profileResult.data.full_name ||
-        user.email ||
-        "Trader";
+  if(profileResult.data){
 
-      document.getElementById("welcomeName").textContent =
-        "Welcome, " + name;
+    const name =
+      profileResult.data.full_name ||
+      email ||
+      "Trader";
 
-      document.getElementById("plan").textContent =
-        (profileResult.data.plan || "free").toUpperCase();
-    }
+    document.getElementById(
+      "welcomeName"
+    ).textContent =
+      "Welcome, " + name;
 
-    const subscriptionResult = await supabaseClient
+    const plan =
+      (profileResult.data.plan || "free")
+      .toUpperCase();
+
+    document.getElementById(
+      "plan"
+    ).textContent = plan;
+
+    document.getElementById(
+      "subscriptionPlan"
+    ).textContent = plan;
+
+  }
+
+
+  const subscriptionResult =
+    await supabaseClient
       .from("subscriptions")
-      .select("plan, status, expires_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
+      .select("plan,status,expires_at")
+      .eq("user_id",user.id)
+      .order("created_at",{ascending:false})
       .limit(1)
       .maybeSingle();
 
-    if (subscriptionResult.data &&
-        subscriptionResult.data.status === "active") {
 
-      document.getElementById("plan").textContent =
-        subscriptionResult.data.plan.toUpperCase();
-    }
+  if(
+    subscriptionResult.data &&
+    subscriptionResult.data.status === "active"
+  ){
 
-    await loadSignals();
+    const plan =
+      subscriptionResult.data.plan.toUpperCase();
+
+    document.getElementById(
+      "plan"
+    ).textContent = plan;
+
+    document.getElementById(
+      "subscriptionPlan"
+    ).textContent = plan;
+
   }
 
-  async function loadSignals() {
 
-    const container = document.getElementById("signals");
+  await loadSignals();
 
-    const {
-      data,
-      error
-    } = await supabaseClient
+}
+
+
+async function loadSignals(){
+
+  const container =
+    document.getElementById(
+      "signalsContainer"
+    );
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
       .from("signals")
-      .select(
-        "id,symbol,direction,timeframe,entry,stop_loss,take_profit,status,message,created_at"
-      )
-      .order("created_at", { ascending: false })
+      .select("*")
+      .order("created_at",{ascending:false})
       .limit(20);
 
-    if (error) {
-      container.innerHTML =
-        '<div class="error">Unable to load signals.</div>';
-      console.error(error);
-      return;
-    }
 
-    if (!data || data.length === 0) {
-      container.innerHTML =
-        '<div class="empty">No TRADNEX signals have been published yet.</div>';
-      return;
-    }
+  if(error){
 
-    container.innerHTML = data.map(signal => {
+    console.error(error);
 
-      const directionClass =
-        signal.direction === "BUY"
-          ? "direction-buy"
-          : "direction-sell";
+    container.innerHTML =
+      `<div class="empty">
+        Unable to load signals.
+       </div>`;
 
-      return `
-        <div class="signal">
+    return;
 
-          <div class="signal-top">
-
-            <div>
-              <div class="${directionClass}">
-                ${escapeHtml(signal.symbol)} — ${escapeHtml(signal.direction)}
-              </div>
-
-              <small style="color:#78869a">
-                ${escapeHtml(signal.timeframe || "15M")}
-              </small>
-            </div>
-
-            <span class="status">
-              ${escapeHtml(signal.status || "ACTIVE")}
-            </span>
-
-          </div>
-
-          <div class="values">
-
-            <div class="value-box">
-              <small>ENTRY</small>
-              <strong>${formatPrice(signal.entry)}</strong>
-            </div>
-
-            <div class="value-box">
-              <small>STOP LOSS</small>
-              <strong>${formatPrice(signal.stop_loss)}</strong>
-            </div>
-
-            <div class="value-box">
-              <small>TAKE PROFIT</small>
-              <strong>${formatPrice(signal.take_profit)}</strong>
-            </div>
-
-            <div class="value-box">
-              <small>TIME</small>
-              <strong>
-                ${new Date(signal.created_at).toLocaleTimeString()}
-              </strong>
-            </div>
-
-          </div>
-
-          ${
-            signal.message
-              ? `<p style="margin-top:15px;color:#8e9caf">
-                   ${escapeHtml(signal.message)}
-                 </p>`
-              : ""
-          }
-
-        </div>
-      `;
-
-    }).join("");
   }
 
-  document.getElementById("logoutBtn").onclick = async () => {
+
+  if(!data || data.length === 0){
+
+    container.innerHTML =
+      `<div class="empty">
+        No TRADNEX signals have been published yet.
+       </div>`;
+
+    return;
+
+  }
+
+
+  container.innerHTML =
+    data.map(renderSignal).join("");
+
+}
+
+
+document
+  .getElementById("logoutBtn")
+  .onclick = async () => {
 
     await supabaseClient.auth.signOut();
 
     window.location.href = "/";
+
   };
 
-  supabaseClient
-    .channel("tradnex-live-signals")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "signals"
-      },
-      () => {
-        loadSignals();
-      }
-    )
-    .subscribe();
 
-  loadDashboard();
+document
+  .querySelectorAll(".menu a")
+  .forEach(link => {
+
+    link.addEventListener(
+      "click",
+      () => {
+
+        document
+          .querySelectorAll(".menu a")
+          .forEach(item =>
+            item.classList.remove("active")
+          );
+
+        link.classList.add("active");
+
+      }
+    );
+
+  });
+
+
+supabaseClient
+  .channel("tradnex-live-signals")
+
+  .on(
+    "postgres_changes",
+    {
+      event:"*",
+      schema:"public",
+      table:"signals"
+    },
+
+    () => {
+
+      loadSignals();
+
+    }
+
+  )
+
+  .subscribe();
+
+
+loadDashboard();
+
 </script>
 
 </body>
