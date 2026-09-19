@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -10,551 +9,630 @@
 <style>
 *{box-sizing:border-box}
 body{
- margin:0;
- background:#050b14;
- color:#eaf2ff;
- font-family:Arial,Helvetica,sans-serif;
+margin:0;
+background:#050b14;
+color:#eaf2ff;
+font-family:Arial,Helvetica,sans-serif
 }
 button,input{font:inherit}
 button{cursor:pointer}
 
 .app{
- display:grid;
- grid-template-columns:190px 1fr;
- min-height:100vh;
+display:grid;
+grid-template-columns:190px 1fr;
+min-height:100vh
 }
 
 .sidebar{
- background:#07101d;
- border-right:1px solid #163047;
- padding:22px 14px;
- display:flex;
- flex-direction:column;
+background:#07101d;
+border-right:1px solid #163047;
+padding:22px 14px;
+display:flex;
+flex-direction:column
 }
 
 .logo{
- font-size:26px;
- font-weight:900;
- letter-spacing:2px;
- color:#f4f8ff;
+font-size:26px;
+font-weight:900;
+letter-spacing:2px;
+color:#fff
 }
+
 .logo span{color:#13a8ff}
 
 .tag{
- font-size:9px;
- color:#35bfff;
- letter-spacing:.5px;
- margin-top:4px;
+font-size:9px;
+color:#35bfff;
+margin-top:4px
 }
 
 .nav{
- margin-top:30px;
- display:grid;
- gap:7px;
+margin-top:30px;
+display:grid;
+gap:7px
 }
+
 .nav button{
- border:0;
- background:transparent;
- color:#a8b8cc;
- text-align:left;
- padding:14px 12px;
- border-radius:7px;
+border:0;
+background:transparent;
+color:#a8b8cc;
+text-align:left;
+padding:14px 12px;
+border-radius:7px
 }
+
 .nav button:hover,
 .nav button.active{
- background:#082d4d;
- color:#fff;
+background:#082d4d;
+color:#fff
 }
+
 .nav button.active{
- border-left:3px solid #10a7ff;
+border-left:3px solid #10a7ff
 }
 
 .quote{
- margin-top:auto;
- border:1px solid #15324c;
- border-radius:8px;
- padding:18px 10px;
- text-align:center;
- color:#91a6bb;
- line-height:1.7;
- font-style:italic;
+margin-top:auto;
+border:1px solid #15324c;
+border-radius:8px;
+padding:18px 10px;
+text-align:center;
+color:#91a6bb;
+line-height:1.7;
+font-style:italic
 }
 
-.main{
- min-width:0;
-}
+.main{min-width:0}
 
 .top{
- height:92px;
- border-bottom:1px solid #173149;
- background:#06101d;
- display:flex;
- align-items:center;
- gap:12px;
- padding:15px 20px;
- overflow-x:auto;
+height:92px;
+border-bottom:1px solid #173149;
+background:#06101d;
+display:flex;
+align-items:center;
+gap:12px;
+padding:15px 20px;
+overflow-x:auto
 }
 
 .markets{
- display:flex;
- gap:7px;
- flex:1;
- min-width:max-content;
+display:flex;
+gap:7px;
+flex:1;
+min-width:max-content
 }
+
 .market{
- background:#08182a;
- border:1px solid #1a344c;
- color:#b6c7d9;
- padding:11px 18px;
- border-radius:6px;
+background:#08182a;
+border:1px solid #1a344c;
+color:#b6c7d9;
+padding:11px 18px;
+border-radius:6px
 }
+
 .market.active{
- background:#0877d9;
- border-color:#159cff;
- color:#fff;
+background:#0877d9;
+border-color:#159cff;
+color:#fff
 }
 
 .timeframes{
- display:flex;
- gap:5px;
+display:flex;
+gap:5px
 }
+
 .tf{
- background:#071728;
- border:1px solid #1a344c;
- color:#aebed0;
- padding:10px 13px;
- border-radius:6px;
+background:#071728;
+border:1px solid #1a344c;
+color:#aebed0;
+padding:10px 13px;
+border-radius:6px
 }
+
 .tf.active{
- color:#fff;
- border-color:#159cff;
- background:#092d4b;
+color:#fff;
+border-color:#159cff;
+background:#092d4b
 }
 
 .clock{
- color:#aebed0;
- white-space:nowrap;
- font-size:12px;
+color:#aebed0;
+white-space:nowrap;
+font-size:12px
 }
+
 .live{
- color:#21ed99;
- white-space:nowrap;
- font-size:12px;
+color:#21ed99;
+white-space:nowrap;
+font-size:12px
 }
+
 .live:before{
- content:"";
- display:inline-block;
- width:10px;
- height:10px;
- background:#16e996;
- border-radius:50%;
- margin-right:7px;
+content:"";
+display:inline-block;
+width:10px;
+height:10px;
+background:#16e996;
+border-radius:50%;
+margin-right:7px
 }
 
 .profile{
- display:flex;
- align-items:center;
- gap:10px;
- padding-left:8px;
- border-left:1px solid #183047;
+display:flex;
+align-items:center;
+gap:10px;
+padding-left:8px;
+border-left:1px solid #183047
 }
+
 .avatar{
- width:38px;
- height:38px;
- border-radius:50%;
- background:#174b85;
- display:grid;
- place-items:center;
- font-weight:bold;
+width:38px;
+height:38px;
+border-radius:50%;
+background:#174b85;
+display:grid;
+place-items:center;
+font-weight:bold
 }
 
 .content{
- padding:14px 18px;
+padding:14px 18px
 }
 
 .search{
- margin-bottom:12px;
+margin-bottom:12px
 }
+
 .search input{
- width:100%;
- background:#071523;
- border:1px solid #1b3953;
- color:#fff;
- padding:13px 15px;
- border-radius:7px;
- outline:none;
+width:100%;
+background:#071523;
+border:1px solid #1b3953;
+color:#fff;
+padding:13px 15px;
+border-radius:7px;
+outline:none
 }
-.search input:focus{border-color:#149cff}
+
+.search input:focus{
+border-color:#149cff
+}
 
 .dashboard{
- display:grid;
- grid-template-columns:minmax(280px,1.05fr) minmax(320px,1.25fr) minmax(260px,.85fr);
- gap:12px;
+display:grid;
+grid-template-columns:minmax(280px,1.05fr) minmax(320px,1.25fr) minmax(260px,.85fr);
+gap:12px
 }
 
 .card{
- background:#07111e;
- border:1px solid #17334c;
- border-radius:9px;
- overflow:hidden;
+background:#07111e;
+border:1px solid #17334c;
+border-radius:9px;
+overflow:hidden
 }
 
 .cardhead{
- padding:14px;
- border-bottom:1px solid #153047;
- display:flex;
- justify-content:space-between;
- align-items:center;
+padding:14px;
+border-bottom:1px solid #153047;
+display:flex;
+justify-content:space-between;
+align-items:center
 }
 
 .symbol{
- font-size:25px;
- font-weight:900;
+font-size:25px;
+font-weight:900
 }
+
 .muted{
- color:#8fa4ba;
- font-size:12px;
- margin-top:5px;
+color:#8fa4ba;
+font-size:12px;
+margin-top:5px
 }
 
 .signalbox{
- padding:14px;
+padding:14px
 }
 
 .signal{
- border:1px solid #14b879;
- background:linear-gradient(90deg,#073322,#071b19);
- border-radius:8px;
- padding:14px;
- margin-bottom:14px;
+border:1px solid #14b879;
+background:#073322;
+border-radius:8px;
+padding:14px;
+margin-bottom:14px
 }
+
 .signal.sell{
- border-color:#ff4c60;
- background:linear-gradient(90deg,#38151b,#171017);
+border-color:#ff4c60;
+background:#38151b
 }
+
 .signal.wait{
- border-color:#45596d;
- background:#0a1521;
+border-color:#45596d;
+background:#0a1521
 }
 
 .signal-title{
- font-size:24px;
- font-weight:900;
- color:#16e998;
+font-size:24px;
+font-weight:900;
+color:#16e998
 }
+
 .signal.sell .signal-title{color:#ff5365}
 .signal.wait .signal-title{color:#aab8c6}
 
 .rows{
- display:grid;
- gap:1px;
+display:grid;
+gap:1px
 }
+
 .row{
- display:flex;
- justify-content:space-between;
- padding:9px 0;
- border-bottom:1px solid #102436;
- color:#9eb1c4;
+display:flex;
+justify-content:space-between;
+padding:9px 0;
+border-bottom:1px solid #102436;
+color:#9eb1c4
 }
+
 .row strong{color:#fff}
 
 .metrics{
- display:grid;
- grid-template-columns:repeat(2,1fr);
- gap:7px;
- margin-top:12px;
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:7px;
+margin-top:12px
 }
-.metric{
- background:#091622;
- border:1px solid #10283d;
- padding:10px;
- border-radius:7px;
-}
-.metric small{
- display:block;
- color:#728ba4;
- font-size:9px;
- margin-bottom:5px;
-}
-.metric strong{font-size:15px}
 
-.chart{
- min-height:440px;
- position:relative;
+.metric{
+background:#091622;
+border:1px solid #10283d;
+padding:10px;
+border-radius:7px
 }
+
+.metric small{
+display:block;
+color:#728ba4;
+font-size:9px;
+margin-bottom:5px
+}
+
+.metric strong{font-size:15px}.chart{
+min-height:440px;
+position:relative
+}
+
 .chartarea{
- height:440px;
- background:
- linear-gradient(rgba(30,65,91,.25) 1px,transparent 1px),
- linear-gradient(90deg,rgba(30,65,91,.25) 1px,transparent 1px);
- background-size:55px 55px;
- position:relative;
- overflow:hidden;
+height:440px;
+background:
+linear-gradient(rgba(30,65,91,.25) 1px,transparent 1px),
+linear-gradient(90deg,rgba(30,65,91,.25) 1px,transparent 1px);
+background-size:55px 55px;
+position:relative;
+overflow:hidden
 }
+
 .chartline{
- position:absolute;
- left:5%;
- right:5%;
- bottom:28%;
- height:2px;
- background:#14e6a0;
- transform:rotate(-12deg);
- box-shadow:0 0 8px #14e6a0;
+position:absolute;
+left:5%;
+right:5%;
+bottom:28%;
+height:2px;
+background:#14e6a0;
+transform:rotate(-12deg);
+box-shadow:0 0 8px #14e6a0
 }
+
 .chartline:after{
- content:"";
- position:absolute;
- right:0;
- top:-6px;
- width:14px;
- height:14px;
- background:#14e6a0;
- border-radius:50%;
+content:"";
+position:absolute;
+right:0;
+top:-6px;
+width:14px;
+height:14px;
+background:#14e6a0;
+border-radius:50%
 }
+
 .price{
- position:absolute;
- right:10px;
- top:28%;
- background:#087d69;
- padding:5px 8px;
- border-radius:4px;
- font-size:11px;
+position:absolute;
+right:10px;
+top:28%;
+background:#087d69;
+padding:5px 8px;
+border-radius:4px;
+font-size:11px
 }
+
 .chart-title{
- position:absolute;
- top:12px;
- left:14px;
- color:#b6c8db;
- font-size:12px;
+position:absolute;
+top:12px;
+left:14px;
+color:#b6c8db;
+font-size:12px
 }
 
 .right{
- display:grid;
- gap:12px;
+display:grid;
+gap:12px
 }
 
 .right h3,
 .bottom h3{
- margin:0;
- font-size:15px;
+margin:0;
+font-size:15px
 }
 
 .check{
- display:flex;
- gap:9px;
- align-items:flex-start;
- padding:10px 0;
- border-bottom:1px solid #11283a;
- color:#a8bacb;
- font-size:12px;
+display:flex;
+gap:9px;
+align-items:flex-start;
+padding:10px 0;
+border-bottom:1px solid #11283a;
+color:#a8bacb;
+font-size:12px
 }
+
 .check i{
- width:19px;
- height:19px;
- border-radius:50%;
- background:#10d989;
- color:#04120d;
- display:grid;
- place-items:center;
- font-style:normal;
- font-weight:bold;
- flex:none;
+width:19px;
+height:19px;
+border-radius:50%;
+background:#10d989;
+color:#04120d;
+display:grid;
+place-items:center;
+font-style:normal;
+font-weight:bold;
+flex:none
 }
 
 .reason{
- margin-top:12px;
- border:1px solid #0b9c6d;
- background:#06261e;
- border-radius:7px;
- padding:13px;
- color:#a9c5bb;
- font-size:12px;
- line-height:1.6;
+margin-top:12px;
+border:1px solid #0b9c6d;
+background:#06261e;
+border-radius:7px;
+padding:13px;
+color:#a9c5bb;
+font-size:12px;
+line-height:1.6
 }
+
 .reason strong{
- color:#20efa2;
- display:block;
- margin-bottom:7px;
+color:#20efa2;
+display:block;
+margin-bottom:7px
 }
 
 .confidence{
- margin-top:12px;
- text-align:center;
- border:1px solid #1d4664;
- background:#091a2a;
- padding:14px;
- border-radius:7px;
+margin-top:12px;
+text-align:center;
+border:1px solid #1d4664;
+background:#091a2a;
+padding:14px;
+border-radius:7px
 }
+
 .confidence small{
- display:block;
- color:#7690a9;
- font-size:10px;
+display:block;
+color:#7690a9;
+font-size:10px
 }
+
 .confidence strong{
- display:block;
- font-size:26px;
- color:#20efa2;
- margin-top:4px;
+display:block;
+font-size:26px;
+color:#20efa2;
+margin-top:4px
 }
 
 .auto-row{
- display:flex;
- justify-content:space-between;
- padding:11px 0;
- border-bottom:1px solid #11283a;
- color:#9eb1c4;
- font-size:12px;
+display:flex;
+justify-content:space-between;
+padding:11px 0;
+border-bottom:1px solid #11283a;
+color:#9eb1c4;
+font-size:12px
 }
+
 .status{
- color:#20efa2;
+color:#20efa2
 }
+
 .toggle{
- width:38px;
- height:21px;
- border-radius:20px;
- background:#11dc90;
- position:relative;
+width:38px;
+height:21px;
+border-radius:20px;
+background:#11dc90;
+position:relative
 }
+
 .toggle:after{
- content:"";
- position:absolute;
- width:17px;
- height:17px;
- background:#fff;
- border-radius:50%;
- right:2px;
- top:2px;
+content:"";
+position:absolute;
+width:17px;
+height:17px;
+background:#fff;
+border-radius:50%;
+right:2px;
+top:2px
 }
 
 .primary{
- width:100%;
- border:0;
- background:#087fe7;
- color:white;
- padding:12px;
- border-radius:6px;
- font-weight:bold;
- margin-top:12px;
+width:100%;
+border:0;
+background:#087fe7;
+color:#fff;
+padding:12px;
+border-radius:6px;
+font-weight:bold;
+margin-top:12px
 }
 
 .bottom{
- display:grid;
- grid-template-columns:1fr 1.2fr 1fr;
- gap:12px;
- margin-top:12px;
+display:grid;
+grid-template-columns:1fr 1.2fr 1fr;
+gap:12px;
+margin-top:12px
 }
 
 .panel{
- background:#07111e;
- border:1px solid #17334c;
- border-radius:9px;
- padding:14px;
- min-width:0;
+background:#07111e;
+border:1px solid #17334c;
+border-radius:9px;
+padding:14px;
+min-width:0
 }
 
 .table{
- width:100%;
- border-collapse:collapse;
- margin-top:12px;
- font-size:11px;
+width:100%;
+border-collapse:collapse;
+margin-top:12px;
+font-size:11px
 }
+
 .table th{
- text-align:left;
- color:#7189a2;
- padding:8px 4px;
+text-align:left;
+color:#7189a2;
+padding:8px 4px
 }
+
 .table td{
- padding:9px 4px;
- border-top:1px solid #11283a;
- color:#b8c8d8;
+padding:9px 4px;
+border-top:1px solid #11283a;
+color:#b8c8d8
 }
+
 .buy{color:#13e999!important}
 .sell{color:#ff4d60!important}
 
 .timeline{
- margin-top:15px;
- border-left:2px solid #0ce69a;
- padding-left:18px;
+margin-top:15px;
+border-left:2px solid #0ce69a;
+padding-left:18px
 }
+
 .event{
- position:relative;
- padding:0 0 17px;
- color:#a7bacb;
- font-size:12px;
+position:relative;
+padding:0 0 17px;
+color:#a7bacb;
+font-size:12px
 }
+
 .event:before{
- content:"";
- position:absolute;
- left:-25px;
- top:2px;
- width:10px;
- height:10px;
- border-radius:50%;
- background:#13e99a;
+content:"";
+position:absolute;
+left:-25px;
+top:2px;
+width:10px;
+height:10px;
+border-radius:50%;
+background:#13e99a
 }
+
 .event strong{
- color:#fff;
- margin-right:8px;
+color:#fff;
+margin-right:8px
 }
 
 .engine{
- display:grid;
- gap:10px;
- margin-top:14px;
+display:grid;
+gap:10px;
+margin-top:14px
 }
+
 .engine-row{
- display:flex;
- justify-content:space-between;
- padding:9px 0;
- border-bottom:1px solid #11283a;
- color:#a2b6c9;
- font-size:12px;
+display:flex;
+justify-content:space-between;
+padding:9px 0;
+border-bottom:1px solid #11283a;
+color:#a2b6c9;
+font-size:12px
 }
+
 .engine-row strong{color:#17e99b}
 
 .footer{
- padding:20px;
- margin-top:15px;
- border-top:1px solid #173149;
- color:#71869c;
- font-size:11px;
- display:flex;
- justify-content:space-between;
+padding:20px;
+margin-top:15px;
+border-top:1px solid #173149;
+color:#71869c;
+font-size:11px;
+display:flex;
+justify-content:space-between
 }
 
 @media(max-width:1100px){
- .dashboard{grid-template-columns:1fr 1fr}
- .right{grid-column:span 2}
- .bottom{grid-template-columns:1fr 1fr}
+.dashboard{
+grid-template-columns:1fr 1fr
+}
+.right{
+grid-column:span 2
+}
+.bottom{
+grid-template-columns:1fr 1fr
+}
 }
 
 @media(max-width:760px){
- .app{grid-template-columns:1fr}
- .sidebar{
-  display:none;
- }
- .top{
-  height:auto;
-  padding:10px;
-  flex-wrap:wrap;
- }
- .markets{order:1;width:100%;overflow-x:auto}
- .timeframes{order:2}
- .clock,.live,.profile{order:3}
- .content{padding:10px}
- .dashboard,
- .bottom{grid-template-columns:1fr}
- .right{grid-column:auto}
- .chartarea{height:330px}
- .chart{min-height:330px}
- .footer{flex-direction:column;gap:8px}
+.app{
+grid-template-columns:1fr
 }
+
+.sidebar{
+display:none
+}
+
+.top{
+height:auto;
+padding:10px;
+flex-wrap:wrap
+}
+
+.markets{
+order:1;
+width:100%;
+overflow-x:auto
+}
+
+.timeframes{
+order:2
+}
+
+.clock,
+.live,
+.profile{
+order:3
+}
+
+.content{
+padding:10px
+}
+
+.dashboard,
+.bottom{
+grid-template-columns:1fr
+}
+
+.right{
+grid-column:auto
+}
+
+.chartarea{
+height:330px
+}
+
+.chart{
+min-height:330px
+}
+
+.footer{
+flex-direction:column;
+gap:8px
+}
+}
+
 </style>
 </head>
-
-<body>
-
-<div class="app">
+<body><div class="app">
 
 <aside class="sidebar">
 
@@ -613,12 +691,11 @@ TOMORROW
 <section class="content">
 
 <div class="search">
-<input id="search" placeholder="🔎 Search XAUUSD, EURUSD, GBPUSD, BTCUSD...">
+<input id="search" placeholder="🔎 Search XAUUSD, EURUSD, GBPUSD, BTCUSD..." autocomplete="off">
 </div>
 
 <div class="dashboard">
 
-<!-- SIGNAL -->
 <div class="card">
 
 <div class="cardhead">
@@ -651,6 +728,7 @@ TOMORROW
 <small>RISK / REWARD</small>
 <strong id="rr">—</strong>
 </div>
+
 <div class="metric">
 <small>SIGNAL AGE</small>
 <strong id="age">—</strong>
@@ -660,18 +738,20 @@ TOMORROW
 </div>
 </div>
 
-<!-- CHART -->
 <div class="card chart">
 
 <div class="chartarea">
-<div class="chart-title" id="chartTitle">XAUUSD · 15M · TRADNEX</div>
+<div class="chart-title" id="chartTitle">
+XAUUSD · 15M · TRADNEX
+</div>
+
 <div class="chartline"></div>
+
 <div class="price" id="chartPrice">—</div>
 </div>
 
 </div>
 
-<!-- RIGHT -->
 <div class="right">
 
 <div class="card" style="padding:14px">
@@ -751,10 +831,8 @@ Waiting for a confirmed TRADNEX 4H → 15M setup.
 </div>
 
 </div>
-</div>
 
-<!-- BOTTOM -->
-<div class="bottom">
+</div><div class="bottom">
 
 <div class="panel">
 
@@ -769,11 +847,13 @@ Waiting for a confirmed TRADNEX 4H → 15M setup.
 <th>Status</th>
 </tr>
 </thead>
+
 <tbody id="recent">
 <tr>
 <td colspan="4">Loading...</td>
 </tr>
 </tbody>
+
 </table>
 
 </div>
@@ -862,26 +942,24 @@ Signal confirmed
 
 </section>
 </main>
-</div>
-
-<script>
+</div><script>
 
 const SUPABASE_URL="https://jgapathoxwkojfecqbdi.supabase.co";
 const SUPABASE_KEY="sb_publishable_uwfsQ-4Fod_rpoGlq6KbGg_VFj2TSGS";
 
 const sb=window.supabase.createClient(
- SUPABASE_URL,
- SUPABASE_KEY
+SUPABASE_URL,
+SUPABASE_KEY
 );
 
 const instruments=[
- ["XAUUSD","Gold Spot / U.S. Dollar"],
- ["EURUSD","Euro / U.S. Dollar"],
- ["GBPUSD","British Pound / U.S. Dollar"],
- ["US30","Dow Jones"],
- ["NAS100","Nasdaq 100"],
- ["BTCUSD","Bitcoin / U.S. Dollar"],
- ["USOIL","Crude Oil"]
+["XAUUSD","Gold Spot / U.S. Dollar"],
+["EURUSD","Euro / U.S. Dollar"],
+["GBPUSD","British Pound / U.S. Dollar"],
+["US30","Dow Jones"],
+["NAS100","Nasdaq 100"],
+["BTCUSD","Bitcoin / U.S. Dollar"],
+["USOIL","Crude Oil"]
 ];
 
 let selected="XAUUSD";
@@ -891,290 +969,317 @@ const $=id=>document.getElementById(id);
 
 function markets(){
 
- $("markets").innerHTML=instruments.map(x=>
- `<button class="market ${x[0]===selected?"active":""}" onclick="selectInstrument('${x[0]}')">${x[0]}</button>`
- ).join("");
+$("markets").innerHTML=instruments.map(x=>
+`<button class="market ${x[0]===selected?"active":""}"
+onclick="selectInstrument('${x[0]}')">${x[0]}</button>`
+).join("");
 
 }
 
 function selectInstrument(symbol){
 
- selected=symbol;
+selected=symbol;
 
- const item=instruments.find(x=>x[0]===symbol);
+const item=instruments.find(x=>x[0]===symbol);
 
- $("symbol").textContent=symbol;
- $("description").textContent=item?item[1]:"Trading Instrument";
- $("chartTitle").textContent=symbol+" · 15M · TRADNEX";
+$("symbol").textContent=symbol;
+$("description").textContent=item?item[1]:"Trading Instrument";
+$("chartTitle").textContent=symbol+" · 15M · TRADNEX";
 
- markets();
- loadSignal();
+markets();
+loadSignal();
 
 }
 
 $("search").addEventListener("input",function(){
 
- const q=this.value.toUpperCase().trim();
+const q=this.value.toUpperCase().trim();
 
- if(!q)return;
+if(!q)return;
 
- const found=instruments.find(x=>
- x[0].includes(q)
- );
+const found=instruments.find(x=>x[0].includes(q));
 
- if(found)selectInstrument(found[0]);
+if(found)selectInstrument(found[0]);
 
 });
 
 function formatNumber(v){
 
- if(v===null || v===undefined || v==="")return "—";
+if(v===null||v===undefined||v==="")return "—";
 
- return Number(v).toLocaleString(
- undefined,
- {
- minimumFractionDigits:2,
- maximumFractionDigits:2
- }
- );
+return Number(v).toLocaleString(
+undefined,
+{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+}
+);
 
 }
 
 function calculateRR(entry,sl,tp){
 
- if(entry==null || sl==null || tp==null)return "—";
+if(entry==null||sl==null||tp==null)return "—";
 
- const risk=Math.abs(Number(entry)-Number(sl));
+const risk=Math.abs(Number(entry)-Number(sl));
 
- if(risk===0)return "—";
+if(risk===0)return "—";
 
- return (Math.abs(Number(tp)-Number(entry))/risk).toFixed(2)+"R";
+return (
+Math.abs(Number(tp)-Number(entry))/risk
+).toFixed(2)+"R";
 
 }
 
 function signalAge(date){
 
- if(!date)return "—";
+if(!date)return "—";
 
- const mins=Math.floor(
-   (Date.now()-new Date(date).getTime())/60000
- );
+const mins=Math.floor(
+(Date.now()-new Date(date).getTime())/60000
+);
 
- if(mins<1)return "now";
+if(mins<1)return "now";
 
- if(mins<60)return mins+" minutes";
+if(mins<60)return mins+" minutes";
 
- const h=Math.floor(mins/60);
+const h=Math.floor(mins/60);
 
- return h+"h "+(mins%60)+"m";
+return h+"h "+(mins%60)+"m";
 
 }
 
 function renderSignal(s){
 
- currentSignal=s;
+currentSignal=s;
 
- if(!s){
+if(!s){
 
-  $("direction").textContent="NO SIGNAL";
-  $("signalBox").className="signal wait";
+$("direction").textContent="NO SIGNAL";
+$("signalBox").className="signal wait";
+$("signalTime").textContent="15M";
 
-  $("signalTime").textContent="15M";
+$("timeframe").textContent="15M";
+$("fourh").textContent="—";
+$("entry").textContent="—";
+$("current").textContent="—";
+$("sl").textContent="—";
+$("tp").textContent="—";
+$("created").textContent="—";
+$("rr").textContent="—";
+$("age").textContent="—";
 
-  $("fourh").textContent="—";
-  $("entry").textContent="—";
-  $("current").textContent="—";
-  $("sl").textContent="—";
-  $("tp").textContent="—";
-  $("created").textContent="—";
-  $("rr").textContent="—";
-  $("age").textContent="—";
-  $("confidence").textContent="PENDING";
-  $("reason").textContent=
-   "No "+selected+" signal is currently available.";
+$("confidence").textContent="PENDING";
 
-  $("engineDirection").textContent="—";
-  $("engineLevel").textContent="—";
-  $("engineSignal").textContent="—";
-  $("chartPrice").textContent="—";
+$("reason").textContent=
+"No "+selected+" signal is currently available.";
 
-  return;
- }
+$("engineDirection").textContent="—";
+$("engineLevel").textContent="—";
+$("engineSignal").textContent="—";
+$("chartPrice").textContent="—";
 
- const direction=s.direction||"WAITING";
+return;
 
- $("direction").textContent=
- direction==="BUY"?"↗ BUY SIGNAL":
- direction==="SELL"?"↘ SELL SIGNAL":
- direction;
+}
 
- $("signalBox").className=
- direction==="BUY"?"signal":
- direction==="SELL"?"signal sell":
- "signal wait";
+const direction=s.direction||"WAITING";
 
- $("signalTime").textContent=s.timeframe||"15M";
+$("direction").textContent=
+direction==="BUY"?"↗ BUY SIGNAL":
+direction==="SELL"?"↘ SELL SIGNAL":
+direction;
 
- $("timeframe").textContent=s.timeframe||"15M";
+$("signalBox").className=
+direction==="BUY"?"signal":
+direction==="SELL"?"signal sell":
+"signal wait";
 
- $("fourh").textContent=direction;
+$("signalTime").textContent=s.timeframe||"15M";
+$("timeframe").textContent=s.timeframe||"15M";
 
- $("fourh").className=
- direction==="BUY"?"buy":
- direction==="SELL"?"sell":"";
+$("fourh").textContent=direction;
 
- $("entry").textContent=formatNumber(s.entry);
- $("sl").textContent=formatNumber(s.stop_loss);
- $("tp").textContent=formatNumber(s.take_profit);
+$("fourh").className=
+direction==="BUY"?"buy":
+direction==="SELL"?"sell":"";
 
- $("created").textContent=
- s.created_at?
- new Date(s.created_at).toLocaleTimeString([],{
- hour:"2-digit",
- minute:"2-digit"
- }):"—";
+$("entry").textContent=formatNumber(s.entry);
+$("sl").textContent=formatNumber(s.stop_loss);
+$("tp").textContent=formatNumber(s.take_profit);
 
- $("rr").textContent=
- calculateRR(s.entry,s.stop_loss,s.take_profit);
+$("created").textContent=
+s.created_at?
+new Date(s.created_at).toLocaleTimeString([],{
+hour:"2-digit",
+minute:"2-digit"
+}):"—";
 
- $("age").textContent=
- signalAge(s.created_at);
+$("rr").textContent=
+calculateRR(
+s.entry,
+s.stop_loss,
+s.take_profit
+);
 
- $("confidence").textContent=
- s.confidence!==null &&
- s.confidence!==undefined
- ?Number(s.confidence)+"%"
- :"PENDING";
+$("age").textContent=
+signalAge(s.created_at);
 
- $("reason").textContent=
- s.signal_reason ||
- s.setup ||
- s.message ||
- "TRADNEX 4H → 15M confirmation.";
+$("confidence").textContent=
+s.confidence!==null &&
+s.confidence!==undefined
+?Number(s.confidence)+"%"
+:"PENDING";
 
- $("engineDirection").textContent=direction;
+$("reason").textContent=
+s.signal_reason ||
+s.setup ||
+s.message ||
+"TRADNEX 4H → 15M confirmation.";
 
- $("engineSignal").textContent=direction;
+$("engineDirection").textContent=direction;
+$("engineSignal").textContent=direction;
 
- $("engineLevel").textContent=
- s.entry!=null?formatNumber(s.entry):"—";
+$("engineLevel").textContent=
+s.entry!=null?
+formatNumber(s.entry):
+"—";
 
 }
 
 async function loadSignal(){
 
- const {data,error}=await sb
- .from("signals")
- .select("*")
- .eq("symbol",selected)
- .order("created_at",{ascending:false})
- .limit(1)
- .maybeSingle();
+const {data,error}=await sb
+.from("signals")
+.select("*")
+.eq("symbol",selected)
+.order("created_at",{ascending:false})
+.limit(1)
+.maybeSingle();
 
- if(error){
+if(error){
 
-  console.error(error);
-  renderSignal(null);
-  return;
- }
+console.error(error);
+renderSignal(null);
+return;
 
- renderSignal(data);
+}
+
+renderSignal(data);
 
 }
 
 async function loadRecent(){
 
- const {data,error}=await sb
- .from("signals")
- .select("*")
- .order("created_at",{ascending:false})
- .limit(8);
+const {data,error}=await sb
+.from("signals")
+.select("*")
+.order("created_at",{ascending:false})
+.limit(8);
 
- if(error){
+if(error){
 
-  console.error(error);
+console.error(error);
 
-  $("recent").innerHTML=
-   `<tr><td colspan="4">Unable to load signals</td></tr>`;
+$("recent").innerHTML=
+`<tr><td colspan="4">
+Unable to load signals
+</td></tr>`;
 
-  return;
+return;
 
- }
+}
 
- if(!data || !data.length){
+if(!data||!data.length){
 
-  $("recent").innerHTML=
-   `<tr><td colspan="4">No signals available</td></tr>`;
+$("recent").innerHTML=
+`<tr><td colspan="4">
+No signals available
+</td></tr>`;
 
-  return;
+return;
 
- }
+}
 
- $("recent").innerHTML=data.map(s=>{
+$("recent").innerHTML=data.map(s=>{
 
-  const cls=s.direction==="BUY"?"buy":"sell";
+const cls=
+s.direction==="BUY"?"buy":"sell";
 
-  return `
-  <tr>
-   <td>${s.created_at?
-   new Date(s.created_at).toLocaleTimeString([],{
-    hour:"2-digit",
-    minute:"2-digit"
-   }):"—"}</td>
-   <td>${s.symbol}</td>
-   <td class="${cls}">${s.direction}</td>
-   <td>${s.status||"ACTIVE"}</td>
-  </tr>
-  `;
+return `
+<tr>
+<td>${s.created_at?
+new Date(s.created_at).toLocaleTimeString([],{
+hour:"2-digit",
+minute:"2-digit"
+}):"—"}</td>
 
- }).join("");
+<td>${s.symbol}</td>
+
+<td class="${cls}">
+${s.direction}
+</td>
+
+<td>${s.status||"ACTIVE"}</td>
+</tr>
+`;
+
+}).join("");
 
 }
 
 async function loadUser(){
 
- const {data}=await sb.auth.getUser();
+const {data}=await sb.auth.getUser();
 
- if(!data || !data.user)return;
+if(!data||!data.user)return;
 
- const email=data.user.email||"Trader";
+const email=data.user.email||"Trader";
 
- $("username").textContent=
- email.split("@")[0];
+$("username").textContent=
+email.split("@")[0];
 
- $("avatar").textContent=
- email.charAt(0).toUpperCase();
+$("avatar").textContent=
+email.charAt(0).toUpperCase();
 
 }
 
 function clock(){
 
- $("clock").textContent=
- new Date().toLocaleString("en-UG",{
-  weekday:"short",
-  day:"2-digit",
-  month:"short",
-  year:"numeric",
-  hour:"2-digit",
-  minute:"2-digit",
-  hour12:false,
-  timeZone:"Africa/Kampala"
- })+" (EAT)";
+$("clock").textContent=
+new Date().toLocaleString("en-UG",{
+weekday:"short",
+day:"2-digit",
+month:"short",
+year:"numeric",
+hour:"2-digit",
+minute:"2-digit",
+hour12:false,
+timeZone:"Africa/Kampala"
+})+" (EAT)";
 
 }
+setInterval(clock,30000);
+
+setInterval(()=>{
+  if(currentSignal){
+    $("age").textContent=
+      signalAge(currentSignal.created_at);
+  }
+},60000);
 
 sb.channel("tradnex-live-signals")
 .on(
- "postgres_changes",
- {
-  event:"*",
-  schema:"public",
-  table:"signals"
- },
- payload=>{
-  loadSignal();
-  loadRecent();
- }
+  "postgres_changes",
+  {
+    event:"*",
+    schema:"public",
+    table:"signals"
+  },
+  ()=>{
+    loadSignal();
+    loadRecent();
+  }
 )
 .subscribe();
 
@@ -1183,14 +1288,6 @@ loadUser();
 loadSignal();
 loadRecent();
 clock();
-
-setInterval(clock,30000);
-setInterval(()=>{
- if(currentSignal){
-  $("age").textContent=
-   signalAge(currentSignal.created_at);
- }
-},60000);
 
 </script>
 
