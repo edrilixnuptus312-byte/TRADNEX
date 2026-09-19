@@ -630,7 +630,96 @@ gap:8px
 }
 }
 
-</style>
+.ai-panel{
+grid-column:1/-1;
+border:1px solid #163047;
+background:#07101d;
+padding:14px;
+border-radius:8px;
+}
+
+.ai-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:8px;
+margin-top:10px;
+}
+
+.ai-item{
+background:#091622;
+border:1px solid #10283d;
+padding:12px;
+border-radius:7px;
+}
+
+.ai-item small,
+.ai-confidence small{
+display:block;
+color:#728ba4;
+font-size:9px;
+margin-bottom:6px;
+}
+
+.ai-item strong{
+font-size:14px;
+color:#20efa2;
+}
+
+.ai-confidence{
+margin-top:8px;
+padding:12px;
+border:1px solid #163047;
+border-radius:7px;
+text-align:center;
+background:#081522;
+}
+
+.ai-confidence strong{
+display:block;
+font-size:24px;
+color:#20efa2;
+margin-top:4px;
+}
+
+.ai-reason{
+margin-top:8px;
+padding:12px;
+border-radius:7px;
+background:#081522;
+border:1px solid #163047;
+}
+
+.ai-reason strong{
+color:#20efa2;
+}
+
+.ai-reason p,
+.ai-warning p{
+margin:7px 0 0;
+color:#a9bacb;
+font-size:12px;
+line-height:1.5;
+}
+
+.ai-warning{
+margin-top:8px;
+padding:12px;
+border-radius:7px;
+background:#15130b;
+border:1px solid #5a4b18;
+}
+
+.ai-warning strong{
+color:#ffd45a;
+}
+
+@media(max-width:720px){
+
+.ai-grid{
+grid-template-columns:repeat(2,1fr);
+}
+
+}</style>
 </head>
 <body><div class="app">
 
@@ -639,7 +728,10 @@ gap:8px
 <div class="logo">TRA<span>DNEX</span></div>
 <div class="tag">TRADE SMARTER · TRADE FURTHER</div>
 
-<div class="nav">
+<button class="active">⌂ &nbsp; Dashboard</button>
+<button>〽 &nbsp; Live Signals</button>
+<button>⚙ &nbsp; Auto Trading</button>
+<button>💡 &nbsp; Strategy & Logic</button>
 <button class="active">⌂ &nbsp; Dashboard</button>
 <button>〽 &nbsp; Live Signals</button>
 <button>⚙ &nbsp; Auto Trading</button>
@@ -832,7 +924,73 @@ Waiting for a confirmed TRADNEX 4H → 15M setup.
 
 </div>
 
-</div><div class="bottom">
+</div><div class="bottom"><div class="panel ai-panel">
+
+<h3>🤖 AI Market Prediction & Reasons</h3>
+
+<div class="ai-grid">
+
+<div class="ai-item">
+<small>MARKET BIAS</small>
+<strong id="aiBias">ANALYZING</strong>
+</div>
+
+<div class="ai-item">
+<small>MOMENTUM</small>
+<strong id="aiMomentum">ANALYZING</strong>
+</div>
+
+<div class="ai-item">
+<small>VOLATILITY</small>
+<strong id="aiVolatility">ANALYZING</strong>
+</div>
+
+<div class="ai-item">
+<small>AI CONFIRMATION</small>
+<strong id="aiConfirmation">PENDING</strong>
+</div>
+
+</div>
+
+<div class="ai-confidence">
+
+<small>AI MARKET CONFIDENCE</small>
+
+<strong id="aiConfidence">PENDING</strong>
+
+</div>
+
+<div class="ai-reason">
+
+<strong>🧠 Market Insight</strong>
+
+<p id="aiInsight">
+AI is analyzing the current market conditions.
+</p>
+
+</div>
+
+<div class="ai-reason">
+
+<strong>📊 Signal Reason</strong>
+
+<p id="aiSignalReason">
+Waiting for TRADNEX 4H → 15M confirmation.
+</p>
+
+</div>
+
+<div class="ai-warning">
+
+<strong>⚠️ Risk / Market Warning</strong>
+
+<p id="aiWarning">
+No market warning available.
+</p>
+
+</div>
+
+</div>
 
 <div class="panel">
 
@@ -1051,7 +1209,7 @@ return h+"h "+(mins%60)+"m";
 
 function renderSignal(s){
 
-currentSignal=s;
+currentSignal=s;updateAIPrediction();
 
 if(!s){
 
@@ -1148,6 +1306,29 @@ formatNumber(s.entry):
 }
 
 async function loadSignal(){
+
+const {data,error}=await sb
+.from("signals")
+.select("*")
+.eq("symbol",selected)
+.in("status",["ACTIVE","MONITORING"])
+.not("confidence","is",null)
+.order("confidence",{ascending:false,nullsFirst:false})
+.order("created_at",{ascending:false})
+.limit(1)
+.maybeSingle();
+
+if(error){
+
+console.error(error);
+renderSignal(null);
+return;
+
+}
+
+renderSignal(data);
+
+}
 
 const {data,error}=await sb
 .from("signals")
@@ -1257,6 +1438,82 @@ minute:"2-digit",
 hour12:false,
 timeZone:"Africa/Kampala"
 })+" (EAT)";
+
+}function updateAIPrediction(){
+
+if(!currentSignal){
+
+$("aiBias").textContent="NO SIGNAL";
+$("aiMomentum").textContent="WAITING";
+$("aiVolatility").textContent="WAITING";
+$("aiConfirmation").textContent="PENDING";
+$("aiConfidence").textContent="PENDING";
+
+$("aiInsight").textContent=
+"No confirmed TRADNEX setup is currently available.";
+
+$("aiSignalReason").textContent=
+"Waiting for a valid 4H → 15M confirmation.";
+
+$("aiWarning").textContent=
+"No active signal.";
+
+return;
+}
+
+const direction=currentSignal.direction||"NEUTRAL";
+
+const confidence=
+currentSignal.confidence!=null
+?Number(currentSignal.confidence)
+:null;
+
+$("aiBias").textContent=
+direction==="BUY"
+?"BULLISH":
+direction==="SELL"
+?"BEARISH":
+"NEUTRAL";
+
+$("aiMomentum").textContent=
+confidence!==null
+?(confidence>=80?"STRONG":
+confidence>=60?"MODERATE":"WEAK")
+:"PENDING";
+
+$("aiVolatility").textContent="ANALYZING";
+
+$("aiConfirmation").textContent=
+confidence!==null
+?(confidence>=80?"STRONG":
+confidence>=60?"MODERATE":"WEAK")
+:"PENDING";
+
+$("aiConfidence").textContent=
+confidence!==null
+?confidence.toFixed(0)+"%"
+:"PENDING";
+
+$("aiInsight").textContent=
+direction==="BUY"
+?"Market context is currently aligned with the BUY direction."
+:
+direction==="SELL"
+?"Market context is currently aligned with the SELL direction."
+:
+"Market direction is currently neutral.";
+
+$("aiSignalReason").textContent=
+currentSignal.signal_reason ||
+currentSignal.setup ||
+currentSignal.message ||
+"TRADNEX 4H → 15M confirmation.";
+
+$("aiWarning").textContent=
+confidence!==null && confidence<60
+?"Confidence is below the preferred threshold. Wait for stronger confirmation."
+:
+"Continue monitoring the setup for invalidation.";
 
 }
 setInterval(clock,30000);
