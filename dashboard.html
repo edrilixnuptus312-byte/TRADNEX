@@ -1,71 +1,1198 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TRADNEX | Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TRADNEX | Trading Terminal</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#030911;color:#eef6ff;font-family:Arial,Helvetica,sans-serif}
-button,input{font:inherit}.app{display:grid;grid-template-columns:205px 1fr;min-height:100vh}
-.side{background:#050d16;border-right:1px solid #173047;padding:22px 14px}.logo{font-size:28px;font-weight:900}.logo b{color:#1598ff}.tag{font-size:9px;color:#1598ff;letter-spacing:1.3px;margin:2px 10px 25px}
-.nav{display:grid;gap:6px}.nav a{color:#a7b5c5;text-decoration:none;padding:12px;border-radius:8px;font-size:13px}.nav a:hover,.nav a.active{background:#082a4b;color:#fff;border-left:3px solid #1598ff}
-.quote{margin-top:45px;border:1px solid #14334c;border-radius:9px;padding:18px 10px;text-align:center;color:#a5c8e5;line-height:1.8;font-size:13px}
-.main{min-width:0}.top{height:68px;background:#050d16;border-bottom:1px solid #173047;display:flex;align-items:center;gap:10px;padding:0 18px;position:sticky;top:0;z-index:5}.markets{display:flex;gap:6px;overflow:auto;flex:1}.mkt{background:#081521;border:1px solid #19364d;color:#aab9ca;border-radius:7px;padding:9px 16px;white-space:nowrap}.mkt.active{background:#087bd8;color:#fff;border-color:#1598ff}.clock{font-size:11px;color:#9caec0;white-space:nowrap}.live{color:#20e58a;font-weight:800;font-size:12px;white-space:nowrap}.user{display:flex;align-items:center;gap:8px}.avatar{width:35px;height:35px;border-radius:50%;background:#155ca0;display:grid;place-items:center;font-weight:800}.user small{display:block;color:#75879a}.logout{background:#0c1722;border:1px solid #274057;color:#fff;border-radius:7px;padding:8px}
-.content{padding:18px;max-width:1500px;margin:auto}.search input{width:100%;padding:11px 13px;background:#07131f;border:1px solid #19364d;color:#fff;border-radius:7px;outline:none}.results{display:none;gap:6px;flex-wrap:wrap;margin:7px 0}.results button{background:#081622;border:1px solid #19364d;color:#a9bacb;border-radius:6px;padding:7px 10px}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 275px;gap:12px;margin-top:12px}.maincard{display:grid;grid-template-columns:285px minmax(0,1fr);gap:12px}.card{background:linear-gradient(145deg,#081520,#06101a);border:1px solid #173047;border-radius:10px;padding:16px}.symbol{font-size:24px;font-weight:900}.muted{color:#7f91a5;font-size:12px}.signal{margin:18px 0 12px;padding:13px;border:1px solid #087d4a;background:#05271b;color:#21e58a;border-radius:8px;font-size:20px;font-weight:900}.signal.sell{border-color:#8a3040;background:#2a0b12;color:#ff5364}.kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #142536;font-size:12px}.kv span{color:#8192a5}.buy{color:#21e58a!important}.sell{color:#ff5364!important}.actions{display:flex;gap:7px;margin-top:14px}.btn{border:1px solid #27445c;background:#0b1824;color:#fff;border-radius:7px;padding:9px 12px}.primary{background:#087fe9;border-color:#1598ff}
-.chart{min-height:450px}.charthead{display:flex;justify-content:space-between;color:#aab9ca;font-size:11px}.chartbox{height:385px;margin-top:9px;border:1px solid #142e43;background:repeating-linear-gradient(90deg,transparent 0 76px,#0c2233 77px),repeating-linear-gradient(0deg,transparent 0 54px,#0c2233 55px);position:relative}.chartbox svg{width:100%;height:100%}.price{position:absolute;right:7px;top:40%;background:#087bd8;padding:5px 7px;border-radius:4px;font-size:10px}
-.right h2{font-size:17px;margin-top:0}.check{display:flex;gap:9px;margin:13px 0;font-size:11px;color:#b5c4d2}.check i{width:18px;height:18px;background:#0acb73;color:#03140d;border-radius:50%;display:grid;place-items:center;font-style:normal;flex:none}.reason{margin-top:17px;border:1px solid #087b4d;background:#061f17;border-radius:8px;padding:13px;color:#b6c8d7;font-size:11px;line-height:1.6}.reason b{display:block;color:#21e58a;margin-bottom:6px}
-.bottom{display:grid;grid-template-columns:1.1fr 1.1fr 1fr;gap:12px;margin-top:12px}.panel{background:#081520;border:1px solid #173047;border-radius:10px;padding:15px}.title{font-size:14px;font-weight:800;margin-bottom:12px}.table{width:100%;border-collapse:collapse;font-size:10px}.table th,.table td{text-align:left;padding:8px 5px;border-bottom:1px solid #142536}.table th{color:#71849a}.timeline div{display:flex;gap:9px;padding:8px 0;font-size:11px;color:#aab9c8}.dot{width:10px;height:10px;background:#21e58a;border-radius:50%;margin-top:2px;flex:none}
-.profile{margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.stat{background:#0b1723;border:1px solid #173047;border-radius:8px;padding:13px}.stat small{display:block;color:#71849a;font-size:9px;margin-bottom:6px}
-@media(max-width:1050px){.layout{grid-template-columns:1fr}.bottom{grid-template-columns:1fr}.maincard{grid-template-columns:1fr}}
-@media(max-width:720px){.app{display:block}.side{padding:10px;border-right:0;border-bottom:1px solid #173047}.nav{display:flex;overflow:auto}.nav a{white-space:nowrap}.quote{display:none}.top{overflow:auto}.clock{display:none}.content{padding:11px}.profile{grid-template-columns:1fr 1fr}}
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:#050b14;
+ color:#eaf2ff;
+ font-family:Arial,Helvetica,sans-serif;
+}
+button,input{font:inherit}
+button{cursor:pointer}
+
+.app{
+ display:grid;
+ grid-template-columns:190px 1fr;
+ min-height:100vh;
+}
+
+.sidebar{
+ background:#07101d;
+ border-right:1px solid #163047;
+ padding:22px 14px;
+ display:flex;
+ flex-direction:column;
+}
+
+.logo{
+ font-size:26px;
+ font-weight:900;
+ letter-spacing:2px;
+ color:#f4f8ff;
+}
+.logo span{color:#13a8ff}
+
+.tag{
+ font-size:9px;
+ color:#35bfff;
+ letter-spacing:.5px;
+ margin-top:4px;
+}
+
+.nav{
+ margin-top:30px;
+ display:grid;
+ gap:7px;
+}
+.nav button{
+ border:0;
+ background:transparent;
+ color:#a8b8cc;
+ text-align:left;
+ padding:14px 12px;
+ border-radius:7px;
+}
+.nav button:hover,
+.nav button.active{
+ background:#082d4d;
+ color:#fff;
+}
+.nav button.active{
+ border-left:3px solid #10a7ff;
+}
+
+.quote{
+ margin-top:auto;
+ border:1px solid #15324c;
+ border-radius:8px;
+ padding:18px 10px;
+ text-align:center;
+ color:#91a6bb;
+ line-height:1.7;
+ font-style:italic;
+}
+
+.main{
+ min-width:0;
+}
+
+.top{
+ height:92px;
+ border-bottom:1px solid #173149;
+ background:#06101d;
+ display:flex;
+ align-items:center;
+ gap:12px;
+ padding:15px 20px;
+ overflow-x:auto;
+}
+
+.markets{
+ display:flex;
+ gap:7px;
+ flex:1;
+ min-width:max-content;
+}
+.market{
+ background:#08182a;
+ border:1px solid #1a344c;
+ color:#b6c7d9;
+ padding:11px 18px;
+ border-radius:6px;
+}
+.market.active{
+ background:#0877d9;
+ border-color:#159cff;
+ color:#fff;
+}
+
+.timeframes{
+ display:flex;
+ gap:5px;
+}
+.tf{
+ background:#071728;
+ border:1px solid #1a344c;
+ color:#aebed0;
+ padding:10px 13px;
+ border-radius:6px;
+}
+.tf.active{
+ color:#fff;
+ border-color:#159cff;
+ background:#092d4b;
+}
+
+.clock{
+ color:#aebed0;
+ white-space:nowrap;
+ font-size:12px;
+}
+.live{
+ color:#21ed99;
+ white-space:nowrap;
+ font-size:12px;
+}
+.live:before{
+ content:"";
+ display:inline-block;
+ width:10px;
+ height:10px;
+ background:#16e996;
+ border-radius:50%;
+ margin-right:7px;
+}
+
+.profile{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ padding-left:8px;
+ border-left:1px solid #183047;
+}
+.avatar{
+ width:38px;
+ height:38px;
+ border-radius:50%;
+ background:#174b85;
+ display:grid;
+ place-items:center;
+ font-weight:bold;
+}
+
+.content{
+ padding:14px 18px;
+}
+
+.search{
+ margin-bottom:12px;
+}
+.search input{
+ width:100%;
+ background:#071523;
+ border:1px solid #1b3953;
+ color:#fff;
+ padding:13px 15px;
+ border-radius:7px;
+ outline:none;
+}
+.search input:focus{border-color:#149cff}
+
+.dashboard{
+ display:grid;
+ grid-template-columns:minmax(280px,1.05fr) minmax(320px,1.25fr) minmax(260px,.85fr);
+ gap:12px;
+}
+
+.card{
+ background:#07111e;
+ border:1px solid #17334c;
+ border-radius:9px;
+ overflow:hidden;
+}
+
+.cardhead{
+ padding:14px;
+ border-bottom:1px solid #153047;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+}
+
+.symbol{
+ font-size:25px;
+ font-weight:900;
+}
+.muted{
+ color:#8fa4ba;
+ font-size:12px;
+ margin-top:5px;
+}
+
+.signalbox{
+ padding:14px;
+}
+
+.signal{
+ border:1px solid #14b879;
+ background:linear-gradient(90deg,#073322,#071b19);
+ border-radius:8px;
+ padding:14px;
+ margin-bottom:14px;
+}
+.signal.sell{
+ border-color:#ff4c60;
+ background:linear-gradient(90deg,#38151b,#171017);
+}
+.signal.wait{
+ border-color:#45596d;
+ background:#0a1521;
+}
+
+.signal-title{
+ font-size:24px;
+ font-weight:900;
+ color:#16e998;
+}
+.signal.sell .signal-title{color:#ff5365}
+.signal.wait .signal-title{color:#aab8c6}
+
+.rows{
+ display:grid;
+ gap:1px;
+}
+.row{
+ display:flex;
+ justify-content:space-between;
+ padding:9px 0;
+ border-bottom:1px solid #102436;
+ color:#9eb1c4;
+}
+.row strong{color:#fff}
+
+.metrics{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:7px;
+ margin-top:12px;
+}
+.metric{
+ background:#091622;
+ border:1px solid #10283d;
+ padding:10px;
+ border-radius:7px;
+}
+.metric small{
+ display:block;
+ color:#728ba4;
+ font-size:9px;
+ margin-bottom:5px;
+}
+.metric strong{font-size:15px}
+
+.chart{
+ min-height:440px;
+ position:relative;
+}
+.chartarea{
+ height:440px;
+ background:
+ linear-gradient(rgba(30,65,91,.25) 1px,transparent 1px),
+ linear-gradient(90deg,rgba(30,65,91,.25) 1px,transparent 1px);
+ background-size:55px 55px;
+ position:relative;
+ overflow:hidden;
+}
+.chartline{
+ position:absolute;
+ left:5%;
+ right:5%;
+ bottom:28%;
+ height:2px;
+ background:#14e6a0;
+ transform:rotate(-12deg);
+ box-shadow:0 0 8px #14e6a0;
+}
+.chartline:after{
+ content:"";
+ position:absolute;
+ right:0;
+ top:-6px;
+ width:14px;
+ height:14px;
+ background:#14e6a0;
+ border-radius:50%;
+}
+.price{
+ position:absolute;
+ right:10px;
+ top:28%;
+ background:#087d69;
+ padding:5px 8px;
+ border-radius:4px;
+ font-size:11px;
+}
+.chart-title{
+ position:absolute;
+ top:12px;
+ left:14px;
+ color:#b6c8db;
+ font-size:12px;
+}
+
+.right{
+ display:grid;
+ gap:12px;
+}
+
+.right h3,
+.bottom h3{
+ margin:0;
+ font-size:15px;
+}
+
+.check{
+ display:flex;
+ gap:9px;
+ align-items:flex-start;
+ padding:10px 0;
+ border-bottom:1px solid #11283a;
+ color:#a8bacb;
+ font-size:12px;
+}
+.check i{
+ width:19px;
+ height:19px;
+ border-radius:50%;
+ background:#10d989;
+ color:#04120d;
+ display:grid;
+ place-items:center;
+ font-style:normal;
+ font-weight:bold;
+ flex:none;
+}
+
+.reason{
+ margin-top:12px;
+ border:1px solid #0b9c6d;
+ background:#06261e;
+ border-radius:7px;
+ padding:13px;
+ color:#a9c5bb;
+ font-size:12px;
+ line-height:1.6;
+}
+.reason strong{
+ color:#20efa2;
+ display:block;
+ margin-bottom:7px;
+}
+
+.confidence{
+ margin-top:12px;
+ text-align:center;
+ border:1px solid #1d4664;
+ background:#091a2a;
+ padding:14px;
+ border-radius:7px;
+}
+.confidence small{
+ display:block;
+ color:#7690a9;
+ font-size:10px;
+}
+.confidence strong{
+ display:block;
+ font-size:26px;
+ color:#20efa2;
+ margin-top:4px;
+}
+
+.auto-row{
+ display:flex;
+ justify-content:space-between;
+ padding:11px 0;
+ border-bottom:1px solid #11283a;
+ color:#9eb1c4;
+ font-size:12px;
+}
+.status{
+ color:#20efa2;
+}
+.toggle{
+ width:38px;
+ height:21px;
+ border-radius:20px;
+ background:#11dc90;
+ position:relative;
+}
+.toggle:after{
+ content:"";
+ position:absolute;
+ width:17px;
+ height:17px;
+ background:#fff;
+ border-radius:50%;
+ right:2px;
+ top:2px;
+}
+
+.primary{
+ width:100%;
+ border:0;
+ background:#087fe7;
+ color:white;
+ padding:12px;
+ border-radius:6px;
+ font-weight:bold;
+ margin-top:12px;
+}
+
+.bottom{
+ display:grid;
+ grid-template-columns:1fr 1.2fr 1fr;
+ gap:12px;
+ margin-top:12px;
+}
+
+.panel{
+ background:#07111e;
+ border:1px solid #17334c;
+ border-radius:9px;
+ padding:14px;
+ min-width:0;
+}
+
+.table{
+ width:100%;
+ border-collapse:collapse;
+ margin-top:12px;
+ font-size:11px;
+}
+.table th{
+ text-align:left;
+ color:#7189a2;
+ padding:8px 4px;
+}
+.table td{
+ padding:9px 4px;
+ border-top:1px solid #11283a;
+ color:#b8c8d8;
+}
+.buy{color:#13e999!important}
+.sell{color:#ff4d60!important}
+
+.timeline{
+ margin-top:15px;
+ border-left:2px solid #0ce69a;
+ padding-left:18px;
+}
+.event{
+ position:relative;
+ padding:0 0 17px;
+ color:#a7bacb;
+ font-size:12px;
+}
+.event:before{
+ content:"";
+ position:absolute;
+ left:-25px;
+ top:2px;
+ width:10px;
+ height:10px;
+ border-radius:50%;
+ background:#13e99a;
+}
+.event strong{
+ color:#fff;
+ margin-right:8px;
+}
+
+.engine{
+ display:grid;
+ gap:10px;
+ margin-top:14px;
+}
+.engine-row{
+ display:flex;
+ justify-content:space-between;
+ padding:9px 0;
+ border-bottom:1px solid #11283a;
+ color:#a2b6c9;
+ font-size:12px;
+}
+.engine-row strong{color:#17e99b}
+
+.footer{
+ padding:20px;
+ margin-top:15px;
+ border-top:1px solid #173149;
+ color:#71869c;
+ font-size:11px;
+ display:flex;
+ justify-content:space-between;
+}
+
+@media(max-width:1100px){
+ .dashboard{grid-template-columns:1fr 1fr}
+ .right{grid-column:span 2}
+ .bottom{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:760px){
+ .app{grid-template-columns:1fr}
+ .sidebar{
+  display:none;
+ }
+ .top{
+  height:auto;
+  padding:10px;
+  flex-wrap:wrap;
+ }
+ .markets{order:1;width:100%;overflow-x:auto}
+ .timeframes{order:2}
+ .clock,.live,.profile{order:3}
+ .content{padding:10px}
+ .dashboard,
+ .bottom{grid-template-columns:1fr}
+ .right{grid-column:auto}
+ .chartarea{height:330px}
+ .chart{min-height:330px}
+ .footer{flex-direction:column;gap:8px}
+}
 </style>
 </head>
+
 <body>
+
 <div class="app">
-<aside class="side"><div class="logo"><b>↗</b> TRADNEX</div><div class="tag">TRADE SMARTER · TRADE FURTHER</div>
-<nav class="nav"><a class="active" href="#dashboard">⌂ Dashboard</a><a href="#signals">〽 Live Signals</a><a href="#auto">◉ Auto Trading</a><a href="#strategy">♧ Strategy & Logic</a><a href="#history">◷ Signal History</a><a href="#analytics">▥ Performance</a><a href="#broker">↗ Broker Connection</a><a href="#settings">⚙ Settings</a></nav>
-<div class="quote">DISCIPLINE<br><b>TODAY</b><br>FREEDOM<br><b>TOMORROW</b><br>— TRADNEX</div></aside>
+
+<aside class="sidebar">
+
+<div class="logo">TRA<span>DNEX</span></div>
+<div class="tag">TRADE SMARTER · TRADE FURTHER</div>
+
+<div class="nav">
+<button class="active">⌂ &nbsp; Dashboard</button>
+<button>〽 &nbsp; Live Signals</button>
+<button>⚙ &nbsp; Auto Trading</button>
+<button>💡 &nbsp; Strategy & Logic</button>
+<button>◷ &nbsp; Signal History</button>
+<button>▥ &nbsp; Performance</button>
+<button>🔗 &nbsp; Broker Connection</button>
+<button>♧ &nbsp; Notifications</button>
+<button>⚙ &nbsp; Settings</button>
+</div>
+
+<div class="quote">
+DISCIPLINE<br>
+TODAY<br>
+FREEDOM<br>
+TOMORROW
+<br><br>
+— TRADNEX
+</div>
+
+</aside>
+
 <main class="main">
-<header class="top"><div class="markets" id="markets"></div><div class="clock" id="clock"></div><div class="live">● Live Market</div><div class="user"><div class="avatar" id="avatar">T</div><div><small>Welcome</small><strong id="topName">Trader</strong></div><button class="logout" id="logout">Logout</button></div></header>
-<div class="content" id="dashboard">
-<div class="search"><input id="search" placeholder="🔍 Search XAUUSD, EURUSD, GBPUSD, BTCUSD..." autocomplete="off"><div class="results" id="results"></div></div>
-<div class="layout">
-<section>
-<div class="maincard">
-<div class="card"><div class="symbol" id="symbol">XAUUSD</div><div class="muted" id="desc">Gold Spot / U.S. Dollar</div><div class="signal" id="signal">WAITING FOR SIGNAL</div>
-<div class="kv"><span>Timeframe</span><strong id="tf">15M</strong></div><div class="kv"><span>Direction</span><strong id="dir">—</strong></div><div class="kv"><span>Entry</span><strong id="entry">—</strong></div><div class="kv"><span>Current Price</span><strong id="current">—</strong></div><div class="kv"><span>Stop Loss</span><strong id="sl">—</strong></div><div class="kv"><span>Take Profit</span><strong id="tp">—</strong></div><div class="kv"><span>Risk / Reward</span><strong id="rr">—</strong></div><div class="kv"><span>Confidence</span><strong id="conf">PENDING</strong></div><div class="kv"><span>Signal Time</span><strong id="time">—</strong></div>
-<div class="actions"><button class="btn primary" onclick="document.getElementById('signals').scrollIntoView()">View on Chart</button><button class="btn" onclick="alert('Alert settings will be connected next.')">🔔 Set Alert</button></div></div>
-<div class="card chart"><div class="charthead"><span id="chartTitle">XAUUSD · 15M</span><span>TRADNEX</span></div><div class="chartbox"><svg viewBox="0 0 900 385" preserveAspectRatio="none"><polyline fill="none" stroke="#16d58a" stroke-width="3" points="0,290 45,265 90,280 135,235 180,250 225,210 270,225 315,190 360,215 405,180 450,200 495,165 540,178 585,145 630,155 675,120 720,135 765,92 810,105 855,70 900,84"/></svg><span class="price" id="price">—</span></div><div class="muted" style="margin-top:8px">Chart layout is ready for the live market-data feed.</div></div>
+
+<header class="top">
+
+<div class="markets" id="markets"></div>
+
+<div class="timeframes">
+<button class="tf">M5</button>
+<button class="tf active">M15</button>
+<button class="tf">H1</button>
+<button class="tf">H4</button>
 </div>
-<div class="card right" id="signals" style="margin-top:12px"><h2>💡 Why This Signal?</h2><div class="check"><i>✓</i><span id="why1">Waiting for a published signal.</span></div><div class="check"><i>✓</i><span id="why2">Confidence is never invented.</span></div><div class="check"><i>✓</i><span id="why3">Each instrument is filtered separately.</span></div><div class="reason"><b>Strategy Reason</b><span id="reason">No signal reason available yet.</span></div></div>
+
+<div class="clock" id="clock"></div>
+<div class="live">Live Market</div>
+
+<div class="profile">
+<div class="avatar" id="avatar">T</div>
+<div>
+<div style="font-size:10px;color:#8296aa">Welcome</div>
+<strong id="username">Trader</strong>
+</div>
+</div>
+
+</header>
+
+<section class="content">
+
+<div class="search">
+<input id="search" placeholder="🔎 Search XAUUSD, EURUSD, GBPUSD, BTCUSD...">
+</div>
+
+<div class="dashboard">
+
+<!-- SIGNAL -->
+<div class="card">
+
+<div class="cardhead">
+<div>
+<div class="symbol" id="symbol">XAUUSD</div>
+<div class="muted" id="description">Gold Spot / U.S. Dollar</div>
+</div>
+<div style="color:#20efa2;font-size:11px">● REAL-TIME</div>
+</div>
+
+<div class="signalbox">
+
+<div id="signalBox" class="signal">
+<div class="signal-title" id="direction">WAITING</div>
+<div id="signalTime" style="margin-top:5px;color:#a9bacb">15M</div>
+</div>
+
+<div class="rows">
+<div class="row"><span>Timeframe</span><strong id="timeframe">15M</strong></div>
+<div class="row"><span>4H Direction</span><strong id="fourh">—</strong></div>
+<div class="row"><span>Entry Level</span><strong id="entry">—</strong></div>
+<div class="row"><span>Current Price</span><strong id="current">—</strong></div>
+<div class="row"><span>Stop Loss</span><strong id="sl">—</strong></div>
+<div class="row"><span>Take Profit</span><strong id="tp">—</strong></div>
+<div class="row"><span>Signal Time</span><strong id="created">—</strong></div>
+</div>
+
+<div class="metrics">
+<div class="metric">
+<small>RISK / REWARD</small>
+<strong id="rr">—</strong>
+</div>
+<div class="metric">
+<small>SIGNAL AGE</small>
+<strong id="age">—</strong>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- CHART -->
+<div class="card chart">
+
+<div class="chartarea">
+<div class="chart-title" id="chartTitle">XAUUSD · 15M · TRADNEX</div>
+<div class="chartline"></div>
+<div class="price" id="chartPrice">—</div>
+</div>
+
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+
+<div class="card" style="padding:14px">
+
+<h3>💡 Why This Signal?</h3>
+
+<div class="check">
+<i>✓</i>
+<span>4H candle structure identified</span>
+</div>
+
+<div class="check">
+<i>✓</i>
+<span>4H breakout level established</span>
+</div>
+
+<div class="check">
+<i>✓</i>
+<span>15M candle body confirmation</span>
+</div>
+
+<div class="check">
+<i>✓</i>
+<span>TRADNEX confirmation received</span>
+</div>
+
+<div class="check">
+<i>✓</i>
+<span>Waiting for next 4H reset</span>
+</div>
+
+<div class="reason">
+<strong>📄 Strategy Reason</strong>
+<div id="reason">
+Waiting for a confirmed TRADNEX 4H → 15M setup.
+</div>
+</div>
+
+<div class="confidence">
+<small>SIGNAL CONFIDENCE</small>
+<strong id="confidence">PENDING</strong>
+</div>
+
+</div>
+
+<div class="card" style="padding:14px">
+
+<h3>🤖 Auto Trading</h3>
+
+<div class="auto-row">
+<span>Status</span>
+<strong class="status">● READY</strong>
+</div>
+
+<div class="auto-row">
+<span>Risk per trade</span>
+<strong>0.5%</strong>
+</div>
+
+<div class="auto-row">
+<span>Max trades per day</span>
+<strong>3</strong>
+</div>
+
+<div class="auto-row">
+<span>Auto Entry</span>
+<div class="toggle"></div>
+</div>
+
+<div class="auto-row">
+<span>Trade only signals</span>
+<div class="toggle"></div>
+</div>
+
+<button class="primary">🔗 Connect to Broker</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- BOTTOM -->
+<div class="bottom">
+
+<div class="panel">
+
+<h3>📊 Recent Signals</h3>
+
+<table class="table">
+<thead>
+<tr>
+<th>Time</th>
+<th>Symbol</th>
+<th>Signal</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="recent">
+<tr>
+<td colspan="4">Loading...</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+
+<div class="panel">
+
+<h3>◷ Signal Explanation Timeline</h3>
+
+<div class="timeline">
+
+<div class="event">
+<strong>4H</strong>
+Structure identified
+</div>
+
+<div class="event">
+<strong>4H</strong>
+Breakout level established
+</div>
+
+<div class="event">
+<strong>15M</strong>
+Confirmation candle begins
+</div>
+
+<div class="event">
+<strong>15M</strong>
+Candle body closes beyond level
+</div>
+
+<div class="event">
+<strong>TRADNEX</strong>
+Signal confirmed
+</div>
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<h3>⚙ Strategy Engine <span class="buy">(Live)</span></h3>
+
+<div class="engine">
+
+<div class="engine-row">
+<span>4H Breakout</span>
+<strong>✓ Detected</strong>
+</div>
+
+<div class="engine-row">
+<span>4H Direction</span>
+<strong id="engineDirection">—</strong>
+</div>
+
+<div class="engine-row">
+<span>4H Level</span>
+<strong id="engineLevel">—</strong>
+</div>
+
+<div class="engine-row">
+<span>15M Body Close</span>
+<strong>✓ Confirmed</strong>
+</div>
+
+<div class="engine-row">
+<span>Confirmation</span>
+<strong>✓ Valid</strong>
+</div>
+
+<div class="engine-row">
+<span>Signal</span>
+<strong id="engineSignal">—</strong>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="footer">
+<span>TRADNEX — Algorithm. Discipline. Opportunity.</span>
+<span>Trade &nbsp; | &nbsp; Learn &nbsp; | &nbsp; Grow</span>
+</div>
+
 </section>
-<aside class="card right" id="auto"><h2>🤖 Auto Trading</h2><div class="signal" style="font-size:12px;padding:9px">● Status: READY</div><div class="muted">Connect your broker to enable automated execution.</div><button class="btn primary" style="width:100%;margin-top:13px" onclick="alert('Broker connection will be added next.')">↗ Connect to Broker</button><div class="title" style="margin-top:20px">Auto Trading Settings</div><div class="kv"><span>Risk per trade</span><strong>0.5%</strong></div><div class="kv"><span>Max trades / day</span><strong>3</strong></div><div class="kv"><span>Trading symbols</span><strong>Selected</strong></div><div class="kv"><span>Auto entry</span><strong class="buy">ON</strong></div><div class="kv"><span>Auto SL / TP</span><strong class="buy">ON</strong></div></aside>
+</main>
 </div>
-<div class="bottom" id="history">
-<div class="panel"><div class="title">▣ Recent Signals <span class="buy" style="float:right;font-size:10px">LIVE</span></div><table class="table"><thead><tr><th>TIME</th><th>SYMBOL</th><th>SIGNAL</th><th>REASON</th><th>STATUS</th></tr></thead><tbody id="recent"><tr><td colspan="5">Loading...</td></tr></tbody></table></div>
-<div class="panel timeline" id="strategy"><div class="title">◷ Signal Explanation Timeline</div><div><span class="dot"></span><span id="t1">Instrument selected</span></div><div><span class="dot"></span><span id="t2">Waiting for confirmation</span></div><div><span class="dot"></span><span id="t3">Waiting for reason</span></div><div><span class="dot"></span><span class="buy" id="t4">TRADNEX SIGNAL</span></div></div>
-<div class="panel" id="analytics"><div class="title">⚙ Strategy Engine <span class="buy">(Live)</span></div><div class="kv"><span>Instrument</span><strong id="esym">XAUUSD</strong></div><div class="kv"><span>Timeframe</span><strong id="etf">15M</strong></div><div class="kv"><span>Signal</span><strong id="esig">WAITING</strong></div><div class="kv"><span>Confidence</span><strong id="econf">PENDING</strong></div><div class="kv"><span>Status</span><strong class="buy">LIVE</strong></div></div>
-</div>
-<div class="panel" id="settings" style="margin-top:12px"><div class="title">👤 Account Profile</div><div class="profile"><div class="stat"><small>NAME</small><strong id="pname">Trader</strong></div><div class="stat"><small>EMAIL</small><strong id="pemail">Loading...</strong></div><div class="stat"><small>PLAN</small><strong class="buy" id="pplan">FREE</strong></div><div class="stat"><small>STATUS</small><strong class="buy">ACTIVE</strong></div></div></div>
-</div></main></div>
+
 <script>
-const URL="https://jgapathoxwkojfecqbdi.supabase.co",KEY="sb_publishable_uwfsQ-4Fod_rpoGlq6KbGg_VFj2TSGS",sb=window.supabase.createClient(URL,KEY);
-const ins=[["XAUUSD","Gold Spot / U.S. Dollar"],["EURUSD","Euro / U.S. Dollar"],["GBPUSD","British Pound / U.S. Dollar"],["USDJPY","U.S. Dollar / Japanese Yen"],["AUDUSD","Australian Dollar / U.S. Dollar"],["USDCAD","U.S. Dollar / Canadian Dollar"],["NZDUSD","New Zealand Dollar / U.S. Dollar"],["BTCUSD","Bitcoin / U.S. Dollar"],["US30","Dow Jones"],["NAS100","Nasdaq 100"],["USOIL","U.S. Oil"]];
+
+const SUPABASE_URL="https://jgapathoxwkojfecqbdi.supabase.co";
+const SUPABASE_KEY="sb_publishable_uwfsQ-4Fod_rpoGlq6KbGg_VFj2TSGS";
+
+const sb=window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY
+);
+
+const instruments=[
+ ["XAUUSD","Gold Spot / U.S. Dollar"],
+ ["EURUSD","Euro / U.S. Dollar"],
+ ["GBPUSD","British Pound / U.S. Dollar"],
+ ["US30","Dow Jones"],
+ ["NAS100","Nasdaq 100"],
+ ["BTCUSD","Bitcoin / U.S. Dollar"],
+ ["USOIL","Crude Oil"]
+];
+
 let selected="XAUUSD";
-const esc=x=>String(x??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
-const fmt=x=>x==null||x===""?"—":Number(x).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-const rr=(e,s,t)=>e==null||s==null||t==null?"—":(Math.abs(Number(t)-Number(e))/Math.abs(Number(e)-Number(s))).toFixed(2)+"R";
-const cf=s=>s?.confidence!=null&&s.confidence!==""?Math.round(Number(s.confidence))+"%":"PENDING";
-function markets(){document.getElementById("markets").innerHTML=ins.slice(0,8).map(x=>`<button class="mkt ${x[0]===selected?"active":""}" onclick="pick('${x[0]}')">${x[0]}</button>`).join("");document.getElementById("results").innerHTML=ins.map(x=>`<button onclick="pick('${x[0]}')">${x[0]}</button>`).join("")}
-function filter(){let q=document.getElementById("search").value.toUpperCase().trim(),r=document.getElementById("results");r.style.display=q?"flex":"none";r.querySelectorAll("button").forEach(b=>b.style.display=b.textContent.includes(q)?"block":"none")}
-async function pick(s){selected=s;document.getElementById("search").value="";document.getElementById("results").style.display="none";markets();await loadSignal()}
-function render(s){let d=s?.direction||"WAITING FOR SIGNAL",box=document.getElementById("signal");box.textContent=s?d+" SIGNAL "+(s.status==="ACTIVE"?"CONFIRMED":""):("NO "+selected+" SIGNAL");box.className="signal "+(d==="SELL"?"sell":"");let x=ins.find(i=>i[0]===selected)||["","Market"];document.getElementById("symbol").textContent=selected;document.getElementById("desc").textContent=x[1];document.getElementById("tf").textContent=s?.timeframe||"15M";document.getElementById("dir").textContent=s?.direction||"—";document.getElementById("dir").className=s?.direction==="SELL"?"sell":"buy";document.getElementById("entry").textContent=fmt(s?.entry);document.getElementById("current").textContent="—";document.getElementById("sl").textContent=fmt(s?.stop_loss);document.getElementById("tp").textContent=fmt(s?.take_profit);document.getElementById("rr").textContent=rr(s?.entry,s?.stop_loss,s?.take_profit);document.getElementById("conf").textContent=cf(s);document.getElementById("time").textContent=s?.created_at?new Date(s.created_at).toLocaleString():"—";document.getElementById("chartTitle").textContent=selected+" · "+(s?.timeframe||"15M");document.getElementById("price").textContent=s?.entry?fmt(s.entry):"—";document.getElementById("reason").textContent=s?.signal_reason||s?.setup||s?.message||"No signal reason available yet.";document.getElementById("why1").textContent=s?"Published TRADNEX signal found for "+selected+".":"No published signal found for "+selected+".";document.getElementById("why2").textContent=s?.setup||"Waiting for setup data.";document.getElementById("why3").textContent="The selected instrument is filtered independently.";document.getElementById("t1").textContent=selected+" selected";document.getElementById("t2").textContent=s?"Confirmation data received":"Waiting for confirmation";document.getElementById("t3").textContent=s?.signal_reason||s?.message||"Reason pending";document.getElementById("t4").textContent=s?"TRADNEX "+d+" SIGNAL":"NO ACTIVE SIGNAL";document.getElementById("esym").textContent=selected;document.getElementById("etf").textContent=s?.timeframe||"15M";document.getElementById("esig").textContent=s?.direction||"WAITING";document.getElementById("econf").textContent=cf(s)}
-async function loadSignal(){let q=await sb.from("signals").select("*").eq("symbol",selected).order("created_at",{ascending:false}).limit(1).maybeSingle();if(q.error)console.error(q.error);render(q.data||null)}
-async function recent(){let q=await sb.from("signals").select("*").order("created_at",{ascending:false}).limit(8),b=document.getElementById("recent");if(q.error||!q.data?.length){b.innerHTML='<tr><td colspan="5">No published signals yet.</td></tr>';return}b.innerHTML=q.data.map(s=>`<tr><td>${s.created_at?new Date(s.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"—"}</td><td>${esc(s.symbol)}</td><td class="${s.direction==="SELL"?"sell":"buy"}">${esc(s.direction)}</td><td>${esc(s.signal_reason||s.setup||s.message||"Confirmation")}</td><td>${esc(s.status||"ACTIVE")}</td></tr>`).join("")}
-async function user(){let q=await sb.auth.getUser(),u=q.data.user;if(!u){location.href="/";return}let email=u.email||"",name=u.user_metadata?.full_name||"Trader";document.getElementById("pemail").textContent=email;document.getElementById("pname").textContent=name;document.getElementById("topName").textContent=name;document.getElementById("avatar").textContent=name[0].toUpperCase();let p=await sb.from("profiles").select("full_name,plan").eq("id",u.id).maybeSingle();if(p.data){name=p.data.full_name||name;document.getElementById("pname").textContent=name;document.getElementById("topName").textContent=name;document.getElementById("avatar").textContent=name[0].toUpperCase();document.getElementById("pplan").textContent=(p.data.plan||"free").toUpperCase()}}
-document.getElementById("search").addEventListener("input",filter);document.getElementById("logout").onclick=async()=>{await sb.auth.signOut();location.href="/"};setInterval(()=>document.getElementById("clock").textContent=new Date().toLocaleString("en-UG",{weekday:"short",day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"Africa/Kampala"})+" (EAT)",1000);
-sb.channel("tradnex-live-signals").on("postgres_changes",{event:"*",schema:"public",table:"signals"},()=>{loadSignal();recent()}).subscribe();
-(async()=>{markets();await user();await loadSignal();await recent()})();
+let currentSignal=null;
+
+const $=id=>document.getElementById(id);
+
+function markets(){
+
+ $("markets").innerHTML=instruments.map(x=>
+ `<button class="market ${x[0]===selected?"active":""}" onclick="selectInstrument('${x[0]}')">${x[0]}</button>`
+ ).join("");
+
+}
+
+function selectInstrument(symbol){
+
+ selected=symbol;
+
+ const item=instruments.find(x=>x[0]===symbol);
+
+ $("symbol").textContent=symbol;
+ $("description").textContent=item?item[1]:"Trading Instrument";
+ $("chartTitle").textContent=symbol+" · 15M · TRADNEX";
+
+ markets();
+ loadSignal();
+
+}
+
+$("search").addEventListener("input",function(){
+
+ const q=this.value.toUpperCase().trim();
+
+ if(!q)return;
+
+ const found=instruments.find(x=>
+ x[0].includes(q)
+ );
+
+ if(found)selectInstrument(found[0]);
+
+});
+
+function formatNumber(v){
+
+ if(v===null || v===undefined || v==="")return "—";
+
+ return Number(v).toLocaleString(
+ undefined,
+ {
+ minimumFractionDigits:2,
+ maximumFractionDigits:2
+ }
+ );
+
+}
+
+function calculateRR(entry,sl,tp){
+
+ if(entry==null || sl==null || tp==null)return "—";
+
+ const risk=Math.abs(Number(entry)-Number(sl));
+
+ if(risk===0)return "—";
+
+ return (Math.abs(Number(tp)-Number(entry))/risk).toFixed(2)+"R";
+
+}
+
+function signalAge(date){
+
+ if(!date)return "—";
+
+ const mins=Math.floor(
+   (Date.now()-new Date(date).getTime())/60000
+ );
+
+ if(mins<1)return "now";
+
+ if(mins<60)return mins+" minutes";
+
+ const h=Math.floor(mins/60);
+
+ return h+"h "+(mins%60)+"m";
+
+}
+
+function renderSignal(s){
+
+ currentSignal=s;
+
+ if(!s){
+
+  $("direction").textContent="NO SIGNAL";
+  $("signalBox").className="signal wait";
+
+  $("signalTime").textContent="15M";
+
+  $("fourh").textContent="—";
+  $("entry").textContent="—";
+  $("current").textContent="—";
+  $("sl").textContent="—";
+  $("tp").textContent="—";
+  $("created").textContent="—";
+  $("rr").textContent="—";
+  $("age").textContent="—";
+  $("confidence").textContent="PENDING";
+  $("reason").textContent=
+   "No "+selected+" signal is currently available.";
+
+  $("engineDirection").textContent="—";
+  $("engineLevel").textContent="—";
+  $("engineSignal").textContent="—";
+  $("chartPrice").textContent="—";
+
+  return;
+ }
+
+ const direction=s.direction||"WAITING";
+
+ $("direction").textContent=
+ direction==="BUY"?"↗ BUY SIGNAL":
+ direction==="SELL"?"↘ SELL SIGNAL":
+ direction;
+
+ $("signalBox").className=
+ direction==="BUY"?"signal":
+ direction==="SELL"?"signal sell":
+ "signal wait";
+
+ $("signalTime").textContent=s.timeframe||"15M";
+
+ $("timeframe").textContent=s.timeframe||"15M";
+
+ $("fourh").textContent=direction;
+
+ $("fourh").className=
+ direction==="BUY"?"buy":
+ direction==="SELL"?"sell":"";
+
+ $("entry").textContent=formatNumber(s.entry);
+ $("sl").textContent=formatNumber(s.stop_loss);
+ $("tp").textContent=formatNumber(s.take_profit);
+
+ $("created").textContent=
+ s.created_at?
+ new Date(s.created_at).toLocaleTimeString([],{
+ hour:"2-digit",
+ minute:"2-digit"
+ }):"—";
+
+ $("rr").textContent=
+ calculateRR(s.entry,s.stop_loss,s.take_profit);
+
+ $("age").textContent=
+ signalAge(s.created_at);
+
+ $("confidence").textContent=
+ s.confidence!==null &&
+ s.confidence!==undefined
+ ?Number(s.confidence)+"%"
+ :"PENDING";
+
+ $("reason").textContent=
+ s.signal_reason ||
+ s.setup ||
+ s.message ||
+ "TRADNEX 4H → 15M confirmation.";
+
+ $("engineDirection").textContent=direction;
+
+ $("engineSignal").textContent=direction;
+
+ $("engineLevel").textContent=
+ s.entry!=null?formatNumber(s.entry):"—";
+
+}
+
+async function loadSignal(){
+
+ const {data,error}=await sb
+ .from("signals")
+ .select("*")
+ .eq("symbol",selected)
+ .order("created_at",{ascending:false})
+ .limit(1)
+ .maybeSingle();
+
+ if(error){
+
+  console.error(error);
+  renderSignal(null);
+  return;
+ }
+
+ renderSignal(data);
+
+}
+
+async function loadRecent(){
+
+ const {data,error}=await sb
+ .from("signals")
+ .select("*")
+ .order("created_at",{ascending:false})
+ .limit(8);
+
+ if(error){
+
+  console.error(error);
+
+  $("recent").innerHTML=
+   `<tr><td colspan="4">Unable to load signals</td></tr>`;
+
+  return;
+
+ }
+
+ if(!data || !data.length){
+
+  $("recent").innerHTML=
+   `<tr><td colspan="4">No signals available</td></tr>`;
+
+  return;
+
+ }
+
+ $("recent").innerHTML=data.map(s=>{
+
+  const cls=s.direction==="BUY"?"buy":"sell";
+
+  return `
+  <tr>
+   <td>${s.created_at?
+   new Date(s.created_at).toLocaleTimeString([],{
+    hour:"2-digit",
+    minute:"2-digit"
+   }):"—"}</td>
+   <td>${s.symbol}</td>
+   <td class="${cls}">${s.direction}</td>
+   <td>${s.status||"ACTIVE"}</td>
+  </tr>
+  `;
+
+ }).join("");
+
+}
+
+async function loadUser(){
+
+ const {data}=await sb.auth.getUser();
+
+ if(!data || !data.user)return;
+
+ const email=data.user.email||"Trader";
+
+ $("username").textContent=
+ email.split("@")[0];
+
+ $("avatar").textContent=
+ email.charAt(0).toUpperCase();
+
+}
+
+function clock(){
+
+ $("clock").textContent=
+ new Date().toLocaleString("en-UG",{
+  weekday:"short",
+  day:"2-digit",
+  month:"short",
+  year:"numeric",
+  hour:"2-digit",
+  minute:"2-digit",
+  hour12:false,
+  timeZone:"Africa/Kampala"
+ })+" (EAT)";
+
+}
+
+sb.channel("tradnex-live-signals")
+.on(
+ "postgres_changes",
+ {
+  event:"*",
+  schema:"public",
+  table:"signals"
+ },
+ payload=>{
+  loadSignal();
+  loadRecent();
+ }
+)
+.subscribe();
+
+markets();
+loadUser();
+loadSignal();
+loadRecent();
+clock();
+
+setInterval(clock,30000);
+setInterval(()=>{
+ if(currentSignal){
+  $("age").textContent=
+   signalAge(currentSignal.created_at);
+ }
+},60000);
+
 </script>
-</body></html>
+
+</body>
+</html>
