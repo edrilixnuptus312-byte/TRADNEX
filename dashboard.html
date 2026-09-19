@@ -581,7 +581,25 @@ th{
       <div class="signal-header">
         <div>
           <div class="eyebrow">MARKET SIGNALS</div>
-          <h2>Live TRADNEX Signals</h2>
+        <div class="instrument-search">
+  <input
+    type="text"
+    id="instrumentSearch"
+    placeholder="🔍 Search XAUUSD, EURUSD, BTCUSD..."
+    onkeyup="searchInstrument()"
+  />
+
+  <div id="instrumentResults" class="instrument-results">
+    <button onclick="selectInstrument('XAUUSD')">XAUUSD — Gold</button>
+    <button onclick="selectInstrument('EURUSD')">EURUSD</button>
+    <button onclick="selectInstrument('GBPUSD')">GBPUSD</button>
+    <button onclick="selectInstrument('USDJPY')">USDJPY</button>
+    <button onclick="selectInstrument('AUDUSD')">AUDUSD</button>
+    <button onclick="selectInstrument('USDCAD')">USDCAD</button>
+    <button onclick="selectInstrument('NZDUSD')">NZDUSD</button>
+    <button onclick="selectInstrument('BTCUSD')">BTCUSD — Bitcoin</button>
+  </div>
+</div>
         </div>
 
         <span class="live">● REAL-TIME</span>
@@ -1228,5 +1246,31 @@ loadDashboard();
 
 </script>
 
-</body>
+<script>
+function searchInstrument() {
+  const input = document.getElementById("instrumentSearch");
+  const results = document.getElementById("instrumentResults");
+  const query = input.value.toUpperCase();
+
+  const buttons = results.querySelectorAll("button");
+
+  buttons.forEach(button => {
+    button.style.display =
+      button.textContent.toUpperCase().includes(query)
+        ? "block"
+        : "none";
+  });
+
+  results.style.display = query ? "block" : "none";
+}
+
+function selectInstrument(symbol) {
+  const input = document.getElementById("instrumentSearch");
+  input.value = symbol;
+
+  document.getElementById("instrumentResults").style.display = "none";
+
+  console.log("Selected instrument:", symbol);
+}
+</script>
 </html>
