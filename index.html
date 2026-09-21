@@ -1,17 +1,734 @@
-<!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TRADNEX</title><link rel="stylesheet" href="styles.css"></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>TRADNEX | Trade Smarter</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #050910;
+      color: #f5f7fa;
+      line-height: 1.6;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .nav {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6%;
+      border-bottom: 1px solid #17202c;
+      background: #070b12;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #42e58a;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: #aeb8c5;
+      font-size: 15px;
+    }
+
+    .nav-links a:hover {
+      color: #42e58a;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 9px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .btn-dark {
+      background: #101823;
+      border: 1px solid #263343;
+      color: white;
+    }
+
+    .btn-green {
+      background: #42e58a;
+      color: #031008;
+    }
+
+    .hero {
+      min-height: 620px;
+      padding: 90px 6%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 70px;
+      align-items: center;
+      background:
+        radial-gradient(circle at 80% 40%, rgba(66,229,138,.12), transparent 35%),
+        #050910;
+    }
+
+    .eyebrow {
+      color: #42e58a;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      font-size: clamp(46px, 6vw, 78px);
+      line-height: 1.02;
+      margin-bottom: 25px;
+    }
+
+    .hero h1 span {
+      color: #42e58a;
+    }
+
+    .hero p {
+      color: #9da9b7;
+      font-size: 18px;
+      max-width: 570px;
+      margin-bottom: 30px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .market-card {
+      background: #0a111b;
+      border: 1px solid #243141;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 25px 70px rgba(0,0,0,.35);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      padding: 18px 20px;
+      border-bottom: 1px solid #1d2937;
+    }
+
+    .green {
+      color: #42e58a;
+    }
+
+    .chart {
+      height: 270px;
+      position: relative;
+      padding: 35px;
+      background:
+        linear-gradient(#121b27 1px, transparent 1px),
+        linear-gradient(90deg, #121b27 1px, transparent 1px);
+      background-size: 55px 55px;
+    }
+
+    .chart-line {
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      top: 52%;
+      height: 2px;
+      background: #42e58a;
+    }
+
+    .chart-text {
+      position: absolute;
+      top: 25px;
+      left: 25px;
+      color: #8491a0;
+      font-size: 13px;
+    }
+
+    .status {
+      position: absolute;
+      bottom: 25px;
+      left: 25px;
+      right: 25px;
+      color: #aeb8c5;
+      font-size: 14px;
+    }
+
+    .status strong {
+      color: #42e58a;
+      display: block;
+      margin-top: 6px;
+    }
+
+    .card-bottom {
+      padding: 22px;
+    }
+
+    .card-bottom h3 {
+      margin-bottom: 8px;
+    }
+
+    .card-bottom p {
+      color: #8e9baa;
+      font-size: 14px;
+    }
+
+    .section {
+      padding: 90px 6%;
+      border-top: 1px solid #111a25;
+    }
+
+    .section-title {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 50px;
+    }
+
+    .section-title .eyebrow {
+      margin-bottom: 10px;
+    }
+
+    .section-title h2 {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .section-title p {
+      color: #8e9baa;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .feature {
+      padding: 28px;
+      background: #0a111b;
+      border: 1px solid #1d2937;
+      border-radius: 15px;
+    }
+
+    .feature h3 {
+      margin-bottom: 10px;
+    }
+
+    .feature p {
+      color: #8e9baa;
+      font-size: 14px;
+    }
+
+    .pricing {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .price-card {
+      background: #0a111b;
+      border: 1px solid #263343;
+      border-radius: 16px;
+      padding: 30px;
+    }
+
+    .price-card.featured {
+      border-color: #42e58a;
+    }
+
+    .price-card h3 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .price {
+      font-size: 35px;
+      font-weight: 800;
+      margin: 20px 0;
+    }
+
+    .price small {
+      font-size: 13px;
+      color: #8793a1;
+      font-weight: normal;
+    }
+
+    .price-card ul {
+      list-style: none;
+      margin: 20px 0 25px;
+    }
+
+    .price-card li {
+      padding: 8px 0;
+      color: #aeb8c5;
+      font-size: 14px;
+    }
+
+    .price-card li::before {
+      content: "✓ ";
+      color: #42e58a;
+      font-weight: bold;
+    }
+
+    .cta {
+      text-align: center;
+      padding: 100px 6%;
+      background: #07100d;
+      border-top: 1px solid #17251e;
+    }
+
+    .cta h2 {
+      font-size: 44px;
+      margin-bottom: 15px;
+    }
+
+    .cta p {
+      color: #8e9baa;
+      max-width: 600px;
+      margin: 0 auto 28px;
+    }
+
+    footer {
+      padding: 30px 6%;
+      border-top: 1px solid #17202c;
+      color: #6f7c8b;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    @media (max-width: 850px) {
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 60px;
+      }
+
+      .features,
+      .pricing {
+        grid-template-columns: 1fr;
+      }
+
+      .hero h1 {
+        font-size: 50px;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .nav {
+        padding: 0 20px;
+      }
+
+      .nav-buttons .btn-dark {
+        display: none;
+      }
+
+      .hero,
+      .section {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .hero h1 {
+        font-size: 42px;
+      }
+
+      .cta h2 {
+        font-size: 34px;
+      }
+    }
+  </style>
+</head>
+
 <body>
-<header class="nav"><div class="brand">● TRADNEX</div><nav><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#dashboard">Dashboard</a></nav><div><button onclick="openModal('login')" class="ghost">Login</button><button onclick="openModal('signup')" class="primary">Get Started</button></div></header>
-<section class="hero"><div class="eyebrow">TRADNEX PLATFORM</div><h1>Trade smarter.<br><span>Stay in control.</span></h1>
-<div class="terminal"><div class="terminal-top"><b>XAUUSD</b><span>15m</span><span class="green">● LIVE DEMO</span></div><div class="chart"><i class="level red"></i><i class="level greenline"></i><i class="bar b1"></i><i class="bar b2"></i><i class="bar b3"></i><i class="bar b4"></i><i class="bar b5"></i><b class="signal">BUY</b></div><div class="terminal-bottom"><div>Entry<strong>4,621.35</strong></div><div>SL<strong>4,596.35</strong></div><div>TP<strong>4,671.35</strong></div></div></div></section>
-<section id="features" class="section"><div class="head"><div><div class="eyebrow">PLATFORM</div><h2>Everything in one place.</h2></div><p>Built around the TRADNEX workflow.</p></div><div class="cards"><article><b>⌁</b><h3>TRADNEX Signals</h3><p>Track BUY/SELL confirmations based on the 4H → 15M concept.</p></article><article><b>◈</b><h3>Risk Control</h3><p>See risk %, stop loss, take profit and trade exposure.</p></article><article><b>↗</b><h3>Auto Trading</h3><p>Prepare OANDA Practice execution without exposing API credentials.</p></article></div></section>
-<section id="pricing" class="section"><div class="center"><div class="eyebrow">PRICING</div><h2>Choose your access.</h2><p>Payment UI is in demo mode until provider credentials and a secure backend are connected.</p></div><div class="plans">
-<article class="plan"><h3>Free</h3><div class="price">UGX 0</div><p>Explore the platform.</p><ul><li>Basic dashboard</li><li>Strategy overview</li><li>Limited signals</li></ul><button class="ghost full" onclick="openModal('signup')">Start free</button></article>
-<article class="plan featured"><em>POPULAR</em><h3>Pro</h3><div class="price">UGX 99,000<small>/month</small></div><p>Full TRADNEX signal access.</p><ul><li>Full BUY/SELL signals</li><li>4H → 15M setup</li><li>Alerts & trade history</li><li>Risk calculator</li></ul><button class="primary full" onclick="checkout('Pro')">Choose Pro</button></article>
-<article class="plan"><h3>Auto</h3><div class="price">UGX 199,000<small>/month</small></div><p>Automated execution testing.</p><ul><li>Everything in Pro</li><li>OANDA Practice</li><li>Auto SL/TP</li><li>Auto-trading controls</li></ul><button class="primary full" onclick="checkout('Auto')">Choose Auto</button></article>
-<a class="active" href="#dashboard">Overview</a><a href="dashboard.html">Signals</a><a href="dashboard.html">Open Trades</a><a href="dashboard.html">Trade History</a><a href="dashboard.html">Strategy</a><a href="dashboard.html">Subscription</a><a href="dashboard.html">Settings</a>
-<section id="dashboard" class="section"><div class="head"><div><div class="eyebrow">DASHBOARD</div><h2>Your trading command center.</h2></div><button class="primary" onclick="openModal('login')">Open dashboard</button></div><div class="dash"><aside><strong>TRADNEX</strong><a class="active">Overview</a><a>Signals</a><a>Open Trades</a><a>Trade History</a><a>Strategy</a><a>Subscription</a><a>Settings</a></aside><main><div class="stats"><div>Balance<strong>$10,000.00</strong></div><div>Today's P&L<strong class="green">+$126.40</strong></div><div>Risk / trade<strong>0.50%</strong></div><div>Subscription<strong>PRO</strong></div></div><div class="signalbox"><div><small>LATEST TRADNEX SIGNAL</small><h3><span class="green">●</span> XAUUSD — BUY</h3><p>15M body confirmation above saved structure.</p></div><strong>4,621.35</strong></div></main></div></section>
-<footer><b>TRADNEX</b><p>Trading tools built around your rules.</p>© 2026 TRADNEX</footer>
-<div id="modal" class="modal"><div class="modalbox"><button class="close" onclick="closeModal()">×</button><div id="modalContent"></div></div></div>
-<script type="module" src="app.js"></script></body></html>
+
+  <!-- NAVIGATION -->
+  <header class="nav">
+
+    <a href="index.html" class="brand">
+      TRADNEX
+    </a>
+
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="dashboard.html">Dashboard</a>
+    </nav>
+
+    <div class="nav-buttons">
+      <a href="dashboard.html" class="btn btn-dark">
+        Login
+      </a>
+
+      <a href="dashboard.html" class="btn btn-green">
+        Get Started
+      </a>
+    </div>
+
+  </header>
+
+
+  <!-- HERO -->
+  <section class="hero">
+
+    <div>
+
+      <div class="eyebrow">
+        TRADNEX PLATFORM
+      </div>
+
+      <h1>
+        Trade smarter.<br>
+        <span>Stay in control.</span>
+      </h1>
+
+      <p>
+        TRADNEX provides structured market intelligence,
+        live trading signals and automated trading tools
+        built around a 4H → 15M strategy.
+      </p>
+
+      <div class="hero-buttons">
+
+        <a href="dashboard.html" class="btn btn-green">
+          Open Dashboard
+        </a>
+
+        <a href="#pricing" class="btn btn-dark">
+          View Pricing
+        </a>
+
+      </div>
+
+    </div>
+
+
+    <!-- REALISTIC PRODUCT PREVIEW -->
+    <div class="market-card">
+
+      <div class="card-top">
+
+        <strong>XAUUSD</strong>
+
+        <span>15M</span>
+
+        <span class="green">
+          ● LIVE MARKET DATA
+        </span>
+
+      </div>
+
+
+      <div class="chart">
+
+        <div class="chart-text">
+          TRADNEX 4H → 15M
+        </div>
+
+        <div class="chart-line"></div>
+
+        <div class="status">
+          Signal status
+
+          <strong>
+            WAITING FOR CONFIRMATION
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div class="card-bottom">
+
+        <h3>
+          Genuine market signals
+        </h3>
+
+        <p>
+          TRADNEX does not display artificial trade
+          results. A signal appears only when the
+          4H setup and 15M confirmation are satisfied.
+        </p>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- FEATURES -->
+  <section id="features" class="section">
+
+    <div class="section-title">
+
+      <div class="eyebrow">
+        PLATFORM
+      </div>
+
+      <h2>
+        Everything in one place
+      </h2>
+
+      <p>
+        Monitor markets, receive signals and manage
+        your trading workflow from the TRADNEX dashboard.
+      </p>
+
+    </div>
+
+
+    <div class="features">
+
+      <article class="feature">
+
+        <h3>
+          Live Signals
+        </h3>
+
+        <p>
+          Receive genuine signals when the TRADNEX
+          4H → 15M conditions are confirmed.
+        </p>
+
+      </article>
+
+
+      <article class="feature">
+
+        <h3>
+          AI Market Intelligence
+        </h3>
+
+        <p>
+          Analyze market direction, momentum,
+          volatility and setup conditions using
+          live market data.
+        </p>
+
+      </article>
+
+
+      <article class="feature">
+
+        <h3>
+          Auto Trading
+        </h3>
+
+        <p>
+          Connect supported brokers and prepare
+          your trading workflow for automated execution.
+        </p>
+
+      </article>
+
+
+      <article class="feature">
+
+        <h3>
+          Signal History
+        </h3>
+
+        <p>
+          Review previous TRADNEX signals and
+          monitor your trading history.
+        </p>
+
+      </article>
+
+
+      <article class="feature">
+
+        <h3>
+          Multiple Instruments
+        </h3>
+
+        <p>
+          Monitor Gold, Forex, Bitcoin, indices and
+          other supported markets.
+        </p>
+
+      </article>
+
+
+      <article class="feature">
+
+        <h3>
+          Risk Awareness
+        </h3>
+
+        <p>
+          Understand entry conditions, invalidation
+          levels and the reasoning behind each setup.
+        </p>
+
+      </article>
+
+    </div>
+
+  </section>
+
+
+  <!-- PRICING -->
+  <section id="pricing" class="section">
+
+    <div class="section-title">
+
+      <div class="eyebrow">
+        PRICING
+      </div>
+
+      <h2>
+        Choose your plan
+      </h2>
+
+      <p>
+        Start with the plan that matches your trading needs.
+      </p>
+
+    </div>
+
+
+    <div class="pricing">
+
+      <!-- FREE -->
+      <article class="price-card">
+
+        <h3>Free</h3>
+
+        <div class="price">
+          $0
+          <small>/month</small>
+        </div>
+
+        <ul>
+          <li>Create an account</li>
+          <li>TRADNEX dashboard</li>
+          <li>Basic platform access</li>
+        </ul>
+
+        <a href="dashboard.html" class="btn btn-dark">
+          Get Started
+        </a>
+
+      </article>
+
+
+      <!-- PRO -->
+      <article class="price-card featured">
+
+        <h3>Pro</h3>
+
+        <div class="price">
+          $50
+          <small>/month</small>
+        </div>
+
+        <ul>
+          <li>Live 15M signals</li>
+          <li>Gold and Forex</li>
+          <li>Bitcoin</li>
+          <li>Signal reasons</li>
+          <li>Signal history</li>
+        </ul>
+
+        <a href="dashboard.html" class="btn btn-green">
+          Choose Pro
+        </a>
+
+      </article>
+
+
+      <!-- PREMIUM -->
+      <article class="price-card">
+
+        <h3>Premium</h3>
+
+        <div class="price">
+          $100
+          <small>/month</small>
+        </div>
+
+        <ul>
+          <li>All supported instruments</li>
+          <li>Live 15M signals</li>
+          <li>AI market intelligence</li>
+          <li>Signal history</li>
+          <li>Alerts and premium features</li>
+        </ul>
+
+        <a href="dashboard.html" class="btn btn-dark">
+          Choose Premium
+        </a>
+
+      </article>
+
+    </div>
+
+  </section>
+
+
+  <!-- CALL TO ACTION -->
+  <section class="cta">
+
+    <h2>
+      Ready to trade smarter?
+    </h2>
+
+    <p>
+      Enter the TRADNEX dashboard and access
+      the tools built around structured market analysis.
+    </p>
+
+    <a href="dashboard.html" class="btn btn-green">
+      Open TRADNEX Dashboard
+    </a>
+
+  </section>
+
+
+  <!-- FOOTER -->
+  <footer>
+
+    © 2026 TRADNEX. All rights reserved.
+
+  </footer>
+
+</body>
+</html>
