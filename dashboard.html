@@ -448,7 +448,12 @@ TOMORROW
 <div class="avatar" id="avatar">T</div>
 <div>
 <div style="font-size:9px;color:#66809a">ACCOUNT</div>
-<strong id="username">Trader</strong>
+<strong id="username">Trader</strong><div
+  id="planBadge"
+  style="font-size:9px;color:#42e58a;margin-top:3px;font-weight:700;"
+>
+  FREE PLAN
+</div>
 </div>
 </div>
 
@@ -1266,31 +1271,117 @@ button.classList.add("active");
 
 async function loadUser(){
 
-try{
+  try {
 
-const {
-data:{user}
-} =
-await sb.auth.getUser();
+    const {
+      data: {
+        user
+      }
+    } = await sb.auth.getUser();
 
-if(user){
+    if (!user) {
+      window.TRADNEX_PLAN = "FREE";
+      return;
 
-$("username").textContent =
-user.email || "Trader";
-
-$("avatar").textContent =
-(user.email || "T").charAt(0).toUpperCase();
 
 }
 
-}catch(e){
+    // Display user information
+    $("#username").textContent =
+      user.email || "Trader";
 
-console.log("No authenticated user.");
+    $("#avatar").textContent =
+      (user.email || "T").charAt(0).toUpperCase();
+
+
+    // Get the user's latest subscription
+    const {
+      data: subscription,
+      error
+    } = await sb
+      .from("subscriptions")
+      .select("id,user_id,plan,started_at,expires_at,created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+
+    if (error) {
+
+      console.error(
+        "Subscription lookup failed:",
+        error
+      );
+
+      window.TRADNEX_PLAN = "FREE";
+
+      return;
+    }
+
+
+    // No subscription = FREE
+    if (!subscription) {
+
+      window.TRADNEX_PLAN = "FREE";
+
+      return;
+    }
+
+
+    const plan =
+      String(subscription.plan || "")
+        .trim()
+        .toUpperCase();
+
+    const expiresAt =
+      subscription.expires_at
+        ? new Date(subscription.expires_at)
+        : null;
+
+
+    // Paid plan must be valid and not expired
+    const activePaidPlan =
+      (plan === "PRO" || plan === "PREMIUM") &&
+      expiresAt &&
+      expiresAt.getTime() > Date.now();
+
+
+    if (activePaidPlan) {
+
+      window.TRADNEX_PLAN = plan;
+
+    } else {
+
+      window.TRADNEX_PLAN = "FREE";
+
+    }
+const planBadge = $("#planBadge");
+
+if (planBadge) {
+
+  planBadge.textContent =
+    window.TRADNEX_PLAN + " PLAN";
 
 }
 
-}
+    console.log(
+      "TRADNEX subscription:",
+      window.TRADNEX_PLAN
+    );
 
+  } catch (error) {
+
+    console.error(
+      "User loading failed:",
+      error
+    );
+
+    window.TRADNEX_PLAN = "FREE";
+
+  }
+
+}
 
 sb
 .channel("tradnex-live-signals")
