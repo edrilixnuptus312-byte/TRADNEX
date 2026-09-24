@@ -1,52 +1,17 @@
 export default async function handler(req, res) {
+
   if (req.method !== "GET") {
     return res.status(405).json({
       error: "Method not allowed"
     });
   }
 
-  const symbols = [
-    "XAU/USD",
-
-    "EUR/USD",
-    "GBP/USD",
-    "USD/JPY",
-    "USD/CHF",
-    "USD/CAD",
-    "AUD/USD",
-    "NZD/USD",
-
-    "EUR/GBP",
-    "EUR/JPY",
-    "EUR/CHF",
-    "EUR/AUD",
-    "EUR/CAD",
-    "EUR/NZD",
-
-    "GBP/JPY",
-    "GBP/CHF",
-    "GBP/AUD",
-    "GBP/CAD",
-    "GBP/NZD",
-
-    "AUD/JPY",
-    "AUD/CAD",
-    "AUD/CHF",
-    "AUD/NZD",
-
-    "CAD/JPY",
-    "CAD/CHF",
-
-    "CHF/JPY",
-
-    "NZD/JPY",
-    "NZD/CAD",
-    "NZD/CHF",
-
-    "BTC/USD"
-  ];
-
   try {
+
+    // =========================================================
+    // BUILD THE CURRENT TRADNEX API URL
+    // =========================================================
+
     const protocol =
       req.headers["x-forwarded-proto"] || "https";
 
@@ -57,79 +22,129 @@ export default async function handler(req, res) {
       `${protocol}://${host}`;
 
     // =========================================================
-    // SCAN ALL TRADNEX INSTRUMENTS
+    // RUN THE OFFICIAL TRADNEX SIGNAL ENGINE
+    // =========================================================
+    //
+    // signal-engine already contains the official TRADNEX
+    // market universe.
+    //
+    // We use all=true so scanner does not maintain a second
+    // symbol list.
+    //
+    // Strategy remains:
+    // 4H → 15M
+    //
     // =========================================================
 
-    const results = await Promise.all(
-      symbols.map(async (symbol) => {
-
-        try {
-          const response = await fetch(
-            `${baseUrl}/api/signal-engine?symbol=${encodeURIComponent(
-              symbol
-            )}`
-          );
-
-          const data = await response.json();
-
-          return {
-            symbol,
-            status: response.ok
-              ? data.status || "UNKNOWN"
-              : "ERROR",
-            signal: data.signal || null,
-            confidence:
-              data.confidence ?? null,
-            signalTime:
-              data.signalTime || null
-          };
-
-        } catch (error) {
-          return {
-            symbol,
-            status: "ERROR",
-            signal: null,
-            confidence: null,
-            signalTime: null,
-            error: error.message
-          };
-        }
-      })
+    const response = await fetch(
+      `${baseUrl}/api/signal-engine?all=true`
     );
 
+    let data;
+
+    try {
+      data = await response.json();
+    } catch {
+      return res.status(502).json({
+        scanner: "TRADNEX LIVE SCANNER",
+        error: "Invalid response from signal engine"
+      });
+    }
+
     // =========================================================
-    // ONLY REAL SIGNALS
+    // SIGNAL ENGINE ERROR
+    // =========================================================
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        scanner: "TRADNEX LIVE SCANNER",
+        strategy: "TRADNEX 4H → 15M",
+        status: "ERROR",
+        error: "Signal engine request failed",
+        details: data
+      });
+    }
+
+    // =========================================================
+    // READ MARKET RESULTS
+    // =========================================================
+
+    const results =
+      Array.isArray(data.results)
+        ? data.results
+        : [];
+
+    // =========================================================
+    // ONLY RETURN ACTUALLY CREATED SIGNALS
+    // =========================================================
+    //
+    // No demo signals.
+    // No generated/fake signals.
+    //
+    // A signal must have been created by the real signal engine.
+    //
     // =========================================================
 
     const liveSignals =
       results.filter(
         item =>
+          item &&
           item.status === "SIGNAL_CREATED" &&
           item.signal
       );
 
     // =========================================================
-    // SUMMARY
+    // FINAL SCANNER RESPONSE
     // =========================================================
 
     return res.status(200).json({
-      scanner: "TRADNEX LIVE SCANNER",
-      strategy: "4H → 15M",
-      scanned: symbols.length,
-      signalsFound: liveSignals.length,
+
+      scanner:
+        "TRADNEX LIVE SCANNER",
+
+      strategy:
+        "TRADNEX 4H → 15M",
+
+      status:
+        liveSignals.length > 0
+          ? "SIGNALS_FOUND"
+          : "NO_SIGNALS",
+
+      scanned:
+        data.scanned ?? results.length,
+
+      signalsFound:
+        liveSignals.length,
+
+      signals:
+        liveSignals,
+
+      markets:
+        results,
 
       timestamp:
-        new Date().toISOString(),
+        new Date().toISOString()
 
-      signals: liveSignals,
-
-      markets: results
     });
 
   } catch (error) {
+
     return res.status(500).json({
-      error: "Scanner failed",
-      details: error.message
+
+      scanner:
+        "TRADNEX LIVE SCANNER",
+
+      strategy:
+        "TRADNEX 4H → 15M",
+
+      status:
+        "ERROR",
+
+      error:
+        error.message
+
     });
+
   }
+
 }
