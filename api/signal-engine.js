@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
   try {
     // =========================================================
-    // GET COMPLETED 4H + 15M CANDLES
+    // GET MARKET DATA
     // =========================================================
 
     const [h4Response, m15Response] = await Promise.all([
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       fetch(
         `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(
           symbol
-        )}&interval=15min&outputsize=20&order=desc&timezone=UTC&apikey=${encodeURIComponent(
+        )}&interval=15min&outputsize=30&order=desc&timezone=UTC&apikey=${encodeURIComponent(
           twelveKey
         )}`
       )
@@ -66,80 +66,105 @@ export default async function handler(req, res) {
     const h4 = h4Data.values || [];
     const m15 = m15Data.values || [];
 
-    if (h4.length < 3 || m15.length < 2) {
+    if (h4.length < 3 || m15.length < 3) {
       return res.status(502).json({
         error: "Not enough market data"
       });
     }
 
     // =========================================================
-    // IMPORTANT:
-    // Twelve Data returns newest candles first.
+    // TWELVE DATA RETURNS NEWEST FIRST
     //
-    // h4[0] = current/latest 4H candle
-    // h4[1] = most recent completed 4H candle
-    // h4[2] = previous 4H candle
+    // h4[0] = current/in-progress 4H candle
+    // h4[1] = latest completed 4H candle
+    // h4[2] = previous completed 4H candle
+    //
+    // m15[0] = current/in-progress 15M candle
+    // m15[1] = latest completed 15M candle
+    // m15[2] = previous completed 15M candle
     // =========================================================
 
     const current4H = h4[0];
     const completed4H = h4[1];
     const previous4H = h4[2];
 
+    const completed15M = m15[1];
+    const previous15M = m15[2];
+
     // =========================================================
-    // TRADNEX CORE 4H SETUP
-    //
-    // BUY:
-    // completed 4H closes ABOVE previous 4H high
-    //
-    // SELL:
-    // completed 4H closes BELOW previous 4H low
-    //
-    // The completed 4H closing price becomes the key level.
+    // NUMERIC VALUES
     // =========================================================
 
-    const completedClose = Number(completed4H.close);
-    const previousHigh = Number(previous4H.high);
-    const previousLow = Number(previous4H.low);
+    const completed4HOpen = Number(completed4H.open);
+    const completed4HClose = Number(completed4H.close);
+
+    const previous4HHigh = Number(previous4H.high);
+    const previous4HLow = Number(previous4H.low);
+
+    const completed15MOpen = Number(completed15M.open);
+    const completed15MClose = Number(completed15M.close);
+
+    if (
+      !Number.isFinite(completed4HOpen) ||
+      !Number.isFinite(completed4HClose) ||
+      !Number.isFinite(previous4HHigh) ||
+      !Number.isFinite(previous4HLow) ||
+      !Number.isFinite(completed15MOpen) ||
+      !Number.isFinite(completed15MClose)
+    ) {
+      return res.status(502).json({
+        error: "Invalid market data received"
+      });
+    }
+
+    // =========================================================
+    // TRADNEX 4H SETUP
+    //
+    // BUY:
+    // Completed 4H candle closes ABOVE previous 4H high.
+    //
+    // SELL:
+    // Completed 4H candle closes BELOW previous 4H low.
+    //
+    // The completed 4H CLOSE becomes the key level.
+    // =========================================================
 
     let direction = null;
     let keyLevel = null;
 
-    if (completedClose > previousHigh) {
+    if (completed4HClose > previous4HHigh) {
       direction = "BUY";
-      keyLevel = completedClose;
-    } else if (completedClose < previousLow) {
+      keyLevel = completed4HClose;
+    } else if (completed4HClose < previous4HLow) {
       direction = "SELL";
-      keyLevel = completedClose;
+      keyLevel = completed4HClose;
     }
 
     // =========================================================
     // 15M BODY CONFIRMATION
     //
     // BUY:
-    // 15M candle BODY closes above the 4H key level
+    // 15M BODY closes above the 4H key level.
     //
     // SELL:
-    // 15M candle BODY closes below the 4H key level
+    // 15M BODY closes below the 4H key level.
+    //
+    // Previous 15M close must have been on/below the level
+    // for BUY, or on/above the level for SELL.
     // =========================================================
-
-    const completed15M = m15[1];
-    const previous15M = m15[2];
-
-    const close15M = Number(completed15M.close);
-    const previousClose15M = Number(previous15M.close);
 
     let confirmation = false;
 
     if (direction === "BUY") {
       confirmation =
-        close15M > keyLevel &&
-        previousClose15M <= keyLevel;
+        completed15MClose > keyLevel &&
+        Number(previous15M.close) <= keyLevel;
     }
 
     if (direction === "SELL") {
       confirmation =
-        close15M < keyLevel &&
-        previousClose15M >= keyLevel;
+        completed15MClose < keyLevel &&
+        Number(previous15M.close) >= keyLevel;
     }
 
     // =========================================================
@@ -152,11 +177,13 @@ export default async function handler(req, res) {
         symbol,
         strategy: "TRADNEX 4H → 15M",
         status: "NO_SIGNAL",
+
         analysis: {
           current4H,
           completed4H,
           previous4H,
           completed15M,
+          previous15M,
           direction,
           keyLevel,
           confirmation
@@ -165,17 +192,31 @@ export default async function handler(req, res) {
     }
 
     // =========================================================
-    // PREVENT DUPLICATE SIGNALS
+    // SIGNAL CONFIRMATION TIME
     // =========================================================
 
     const signalTime = completed15M.datetime;
 
+    const signalDate = new Date(`${signalTime}Z`);
+
+    if (Number.isNaN(signalDate.getTime())) {
+      return res.status(500).json({
+        error: "Invalid signal timestamp"
+      });
+    }
+
+    // =========================================================
+    // PREVENT DUPLICATE SIGNALS
+    //
+    // The confirmation candle itself identifies the signal.
+    // =========================================================
+
     const existingResponse = await fetch(
       `${supabaseUrl}/rest/v1/signals?symbol=eq.${encodeURIComponent(
         symbol
-      )}&created_at=gte.${encodeURIComponent(
-        new Date(`${signalTime}Z`).toISOString()
-      )}&select=id&limit=1`,
+      )}&timeframe=eq.15M&message=like.*${encodeURIComponent(
+        signalTime
+      )}*&select=id&limit=1`,
       {
         headers: {
           apikey: supabaseKey,
@@ -186,7 +227,10 @@ export default async function handler(req, res) {
 
     const existingSignals = await existingResponse.json();
 
-    if (Array.isArray(existingSignals) && existingSignals.length > 0) {
+    if (
+      Array.isArray(existingSignals) &&
+      existingSignals.length > 0
+    ) {
       return res.status(200).json({
         signal: null,
         symbol,
@@ -197,40 +241,102 @@ export default async function handler(req, res) {
     }
 
     // =========================================================
-    // CREATE REAL TRADNEX SIGNAL
+    // OBJECTIVE CONFIDENCE
     //
-    // No fake/demo signal is inserted.
-    // This is created only after the actual 4H + 15M
-    // conditions are satisfied.
+    // Confidence is NOT a prediction of profitability.
+    // It measures how strongly the actual setup satisfies
+    // the defined TRADNEX conditions.
+    // =========================================================
+
+    const breakoutDistance =
+      Math.abs(completed4HClose -
+        (direction === "BUY"
+          ? previous4HHigh
+          : previous4HLow));
+
+    const confirmationDistance =
+      Math.abs(completed15MClose - keyLevel);
+
+    const previous4HRange =
+      previous4HHigh - previous4HLow;
+
+    let confidence = 70;
+
+    if (previous4HRange > 0) {
+      const breakoutStrength =
+        breakoutDistance / previous4HRange;
+
+      if (breakoutStrength >= 0.50) {
+        confidence += 10;
+      } else if (breakoutStrength >= 0.25) {
+        confidence += 5;
+      }
+    }
+
+    const confirmationBody =
+      Math.abs(completed15MClose - completed15MOpen);
+
+    if (confirmationBody > 0) {
+      const confirmationStrength =
+        confirmationDistance / confirmationBody;
+
+      if (confirmationStrength >= 1) {
+        confidence += 10;
+      } else if (confirmationStrength >= 0.50) {
+        confidence += 5;
+      }
+    }
+
+    confidence = Math.min(95, Math.max(70, confidence));
+
+    // =========================================================
+    // REAL SIGNAL
+    //
+    // NO FAKE SL/TP.
+    // User sets SL/TP manually.
     // =========================================================
 
     const signal = {
       symbol,
       direction,
       timeframe: "15M",
-      entry: close15M,
+
+      entry: completed15MClose,
+
       stop_loss: null,
       take_profit: null,
+
       status: "ACTIVE",
-      message: `TRADNEX ${direction} confirmation`,
-      confidence: null,
+
+      message:
+        `TRADNEX ${direction} confirmation | ${signalTime}`,
+
+      confidence,
+
       setup: "4H → 15M",
+
       signal_reason:
         direction === "BUY"
-          ? "Completed 4H candle closed above previous 4H high, then completed 15M candle body closed above the 4H closing level."
-          : "Completed 4H candle closed below previous 4H low, then completed 15M candle body closed below the 4H closing level."
+          ? "Completed 4H candle closed above the previous 4H high. The completed 4H closing price became the key level, and the completed 15M candle body closed above that level."
+          : "Completed 4H candle closed below the previous 4H low. The completed 4H closing price became the key level, and the completed 15M candle body closed below that level."
     };
+
+    // =========================================================
+    // SAVE REAL SIGNAL TO SUPABASE
+    // =========================================================
 
     const insertResponse = await fetch(
       `${supabaseUrl}/rest/v1/signals`,
       {
         method: "POST",
+
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${supabaseKey}`,
           "Content-Type": "application/json",
           Prefer: "return=representation"
         },
+
         body: JSON.stringify(signal)
       }
     );
@@ -244,11 +350,29 @@ export default async function handler(req, res) {
       });
     }
 
+    // =========================================================
+    // RETURN REAL SIGNAL
+    // =========================================================
+
     return res.status(200).json({
       signal: inserted[0] || signal,
+
       symbol,
+
       strategy: "TRADNEX 4H → 15M",
-      status: "SIGNAL_CREATED"
+
+      status: "SIGNAL_CREATED",
+
+      confidence,
+
+      signalTime,
+
+      market: {
+        completed4H,
+        previous4H,
+        completed15M,
+        previous15M
+      }
     });
 
   } catch (error) {
