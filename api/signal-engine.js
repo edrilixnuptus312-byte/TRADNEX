@@ -179,48 +179,276 @@ if (scanAll && requestedSymbols.length === 0) {
      * Twelve Data supports multiple symbols in one request.
      */
 
-    const symbolQuery = requestedSymbols.join(",");
+/*
+ * =========================================================
+ * GET 15M DATA ONCE
+ *
+ * TRADNEX uses 15M data as the source for both:
+ * - 15M confirmation
+ * - internally-built 4H candles
+ *
+ * This reduces Twelve Data usage from:
+ * 4H + 15M
+ * to:
+ * 15M only
+ * =========================================================
+ */
 
-    const [h4Response, m15Response] = await Promise.all([
-      fetch(
-        `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(
-          symbolQuery
-        )}&interval=4h&outputsize=5&order=desc&timezone=UTC&apikey=${encodeURIComponent(
-          twelveKey
-        )}`
-      ),
+const symbolQuery = requestedSymbols.join(",");
 
-      fetch(
-        `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(
-          symbolQuery
-        )}&interval=15min&outputsize=5&order=desc&timezone=UTC&apikey=${encodeURIComponent(
-          twelveKey
-        )}`
-      )
-    ]);
+const m15Response = await fetch(
+  `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(
+    symbolQuery
+  )}&interval=15min&outputsize=80&order=desc&timezone=UTC&apikey=${encodeURIComponent(
+    twelveKey
+  )}`
+);
 
-    const h4Data = await h4Response.json();
-    const m15Data = await m15Response.json();
+const m15Data = await m15Response.json();
+
+/*
+ * =========================================================
+ * HANDLE TWELVE DATA ERROR
+ * =========================================================
+ */
+
+if (m15Data.status === "error") {
+
+  return res.status(502).json({
+
+    error:
+      "Twelve Data 15M request failed",
+
+    details:
+      m15Data
+
+  });
+
+}
+
+/*
+ * =========================================================
+ * BUILD TRADNEX 4H CANDLES FROM 15M DATA
+ *
+ * Uganda TRADNEX 4H boundaries:
+ *
+ * 01:00–05:00
+ * 05:00–09:00
+ * 09:00–13:00
+ * 13:00–17:00
+ * 17:00–21:00
+ * 21:00–01:00
+ *
+ * In UTC these begin at:
+ *
+ * 22:00
+ * 02:00
+ * 06:00
+ * 10:00
+ * 14:00
+ * 18:00
+ *
+ * Twelve Data is requested in UTC.
+ * =========================================================
+ */
+
+function build4HFrom15M(series) {
+
+  if (!Array.isArray(series)) {
+    return [];
+  }
+
+  const groups = new Map();
+
+  const FOUR_HOURS =
+    4 * 60 * 60 * 1000;
+
+  /*
+   * Anchor the 4H structure at 18:00 UTC.
+   * This produces:
+   *
+   * 18:00
+   * 22:00
+   * 02:00
+   * 06:00
+   * 10:00
+   * 14:00
+   */
+
+  const anchor =
+    Date.UTC(
+      1970,
+      0,
+      1,
+      18,
+      0,
+      0
+    );
+
+  for (const candle of series) {
+
+    if (!candle || !candle.datetime) {
+      continue;
+    }
+
+    const timestamp =
+      Date.parse(
+        `${String(candle.datetime).replace(" ", "T")}Z`
+      );
+
+    if (!Number.isFinite(timestamp)) {
+      continue;
+    }
+
+    const bucket =
+      Math.floor(
+        (timestamp - anchor) /
+          FOUR_HOURS
+      ) * FOUR_HOURS + anchor;
+
+    if (!groups.has(bucket)) {
+      groups.set(bucket, []);
+    }
+
+    groups
+      .get(bucket)
+      .push(candle);
+  }
+
+  const candles = [];
+
+  for (const [
+    bucket,
+    group
+  ] of groups.entries()) {
 
     /*
-     * =======================================================
-     * HANDLE TWELVE DATA ERRORS
-     * =======================================================
+     * A complete 4H candle must contain
+     * sixteen 15M candles.
      */
 
-    if (h4Data.status === "error") {
-      return res.status(502).json({
-        error: "Twelve Data 4H request failed",
-        details: h4Data
-      });
+    if (group.length < 16) {
+      continue;
     }
 
-    if (m15Data.status === "error") {
-      return res.status(502).json({
-        error: "Twelve Data 15M request failed",
-        details: m15Data
-      });
+    group.sort(
+      (a, b) =>
+        Date.parse(
+          `${String(a.datetime).replace(" ", "T")}Z`
+        ) -
+        Date.parse(
+          `${String(b.datetime).replace(" ", "T")}Z`
+        )
+    );
+
+    const first =
+      group[0];
+
+    const last =
+      group[group.length - 1];
+
+    const high =
+      Math.max(
+        ...group.map(
+          candle =>
+            Number(candle.high)
+        )
+      );
+
+    const low =
+      Math.min(
+        ...group.map(
+          candle =>
+            Number(candle.low)
+        )
+      );
+
+    const open =
+      Number(first.open);
+
+    const close =
+      Number(last.close);
+
+    if (
+      !Number.isFinite(open) ||
+      !Number.isFinite(high) ||
+      !Number.isFinite(low) ||
+      !Number.isFinite(close)
+    ) {
+      continue;
     }
+
+    const datetime =
+      new Date(bucket)
+        .toISOString()
+        .slice(0, 19)
+        .replace("T", " ");
+
+    candles.push({
+
+      datetime,
+
+      open:
+        String(open),
+
+      high:
+        String(high),
+
+      low:
+        String(low),
+
+      close:
+        String(close)
+
+    });
+  }
+
+  /*
+   * Twelve Data returns newest first.
+   * Keep the same order because the existing
+   * TRADNEX engine expects:
+   *
+   * h4[0] = current
+   * h4[1] = completed
+   * h4[2] = previous
+   */
+
+  candles.sort(
+    (a, b) =>
+      Date.parse(
+        `${String(b.datetime).replace(" ", "T")}Z`
+      ) -
+      Date.parse(
+        `${String(a.datetime).replace(" ", "T")}Z`
+      )
+  );
+
+  return candles;
+}
+
+/*
+ * Create an h4Data object compatible with
+ * the existing getSeries() function.
+ */
+
+const h4Data = {};
+
+for (const symbol of requestedSymbols) {
+
+  const series =
+    getSeries(
+      m15Data,
+      symbol
+    );
+
+  h4Data[symbol] = {
+
+    values:
+      build4HFrom15M(series)
+
+  };
+
+}
 
     /*
      * =======================================================
