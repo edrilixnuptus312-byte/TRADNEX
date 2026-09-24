@@ -80,36 +80,95 @@ export default async function handler(req, res) {
    * =========================================================
    */
 
-  const requestedSymbol = req.query.symbol;
+ const requestedSymbol = req.query.symbol;
 
-  const scanAll =
-    String(req.query.all || "").toLowerCase() === "true";
+const scanAll =
+  String(req.query.all || "").toLowerCase() === "true";
 
-  let requestedSymbols;
+const batchNumber = Math.max(
+  0,
+  Number.parseInt(req.query.batch || "0", 10) || 0
+);
 
-  if (scanAll) {
-    requestedSymbols = symbols;
-  } else if (requestedSymbol) {
-    requestedSymbols = [requestedSymbol];
-  } else {
-    requestedSymbols = ["XAU/USD"];
-  }
+const batchSize = 4;
 
-  /*
-   * Only allow instruments in the official TRADNEX universe.
-   */
+let requestedSymbols;
 
-  const invalidSymbols = requestedSymbols.filter(
+if (scanAll) {
+
+  const startIndex =
+    batchNumber * batchSize;
+
+  requestedSymbols =
+    symbols.slice(
+      startIndex,
+      startIndex + batchSize
+    );
+
+} else if (requestedSymbol) {
+
+  requestedSymbols = [requestedSymbol];
+
+} else {
+
+  requestedSymbols = ["XAU/USD"];
+
+}
+
+/*
+ * Only allow instruments in the official
+ * TRADNEX market universe.
+ */
+
+const invalidSymbols =
+  requestedSymbols.filter(
     symbol => !symbols.includes(symbol)
   );
 
-  if (invalidSymbols.length > 0) {
-    return res.status(400).json({
-      error: "Unsupported TRADNEX symbol",
-      symbols: invalidSymbols,
-      supportedSymbols: symbols
-    });
-  }
+if (invalidSymbols.length > 0) {
+
+  return res.status(400).json({
+
+    error:
+      "Unsupported TRADNEX symbol",
+
+    symbols:
+      invalidSymbols,
+
+    supportedSymbols:
+      symbols
+
+  });
+
+}
+
+/*
+ * Prevent an invalid batch from returning
+ * an empty successful scan.
+ */
+
+if (scanAll && requestedSymbols.length === 0) {
+
+  return res.status(400).json({
+
+    error:
+      "TRADNEX batch is out of range",
+
+    batch:
+      batchNumber,
+
+    batchSize,
+
+    totalMarkets:
+      symbols.length,
+
+    totalBatches:
+      Math.ceil(symbols.length / batchSize)
+
+  });
+
+}
+
 
   try {
     /*
