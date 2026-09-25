@@ -1142,17 +1142,21 @@ confidence != null && confidence < 60
 
 let lastFavoriteSignalKey = null;
 
-function checkFavoriteSignal(signalData) {
-  if (!signalData || !selected) return;
+function checkFavoriteSignal(signalData){
 
-  const direction = String(
-    signalData.direction || ""
-  ).toUpperCase();
+  if(!signalData || !selected){
+    return;
+  }
 
-  if (
+  const direction =
+    String(
+      signalData.direction || ""
+    ).toUpperCase();
+
+  if(
     direction !== "BUY" &&
     direction !== "SELL"
-  ) {
+  ){
     return;
   }
 
@@ -1165,141 +1169,78 @@ function checkFavoriteSignal(signalData) {
   const signalKey =
     `${selected}-${direction}-${signalTime}`;
 
-  // Prevent duplicate notifications
-  if (signalKey === lastFavoriteSignalKey) {
+  if(
+    signalKey === lastFavoriteSignalKey
+  ){
     return;
   }
 
-  lastFavoriteSignalKey = signalKey;
+  lastFavoriteSignalKey =
+    signalKey;
 
-  if (
+  if(
     "Notification" in window &&
     Notification.permission === "default"
-  ) {
+  ){
+
     Notification.requestPermission();
+
   }
 
-  if (
+  if(
     "Notification" in window &&
     Notification.permission === "granted"
-  ) {
+  ){
+
     new Notification(
       `TRADNEX: ${selected} ${direction}`,
       {
         body:
           `New ${direction} signal confirmed on ${selected} using the TRADNEX 4H → 15M strategy.`,
-        icon: "/favicon.ico"
+        icon:
+          "/favicon.ico"
       }
     );
+
   }
 
   console.log(
     `TRADNEX favorite signal: ${selected} ${direction}`
   );
+
 }
-  if (!selected) return;
 
-  try {
-    const response = await fetch(
-      `/api/scanner?favorite=${encodeURIComponent(selected)}&t=${Date.now()}`
-    );
 
-    if (!response.ok) return;
+// =========================================================
+// LOAD CURRENT SIGNAL
+// =========================================================
 
-    const data = await response.json();
-
-    const results = Array.isArray(data.results)
-      ? data.results
-      : [];
-
-    const market = results.find(
-      item => item.symbol === selected
-    );
-
-    if (!market || !market.signal) return;
-
-    const signal = market.signal;
-
-    const direction =
-      String(
-        signal.direction ||
-        market.direction ||
-        ""
-      ).toUpperCase();
-
-    if (
-      direction !== "BUY" &&
-      direction !== "SELL"
-    ) {
-      return;
-    }
-
-    const signalTime =
-      signal.signalTime ||
-      signal.time ||
-      market.completed15MTime ||
-      "";
-
-    const signalKey =
-      `${selected}-${direction}-${signalTime}`;
-
-    // Prevent the same signal from notifying repeatedly
-    if (signalKey === lastFavoriteSignalKey) {
-      return;
-    }
-
-    lastFavoriteSignalKey = signalKey;
-
-    // Ask permission only when a real signal is found
-    if (
-      "Notification" in window &&
-      Notification.permission === "default"
-    ) {
-      await Notification.requestPermission();
-    }
-
-    if (
-      "Notification" in window &&
-      Notification.permission === "granted"
-    ) {
-      new Notification(
-        `TRADNEX: ${selected} ${direction}`,
-        {
-          body:
-            `New ${direction} signal confirmed on ${selected} using the TRADNEX 4H → 15M strategy.`,
-          icon:
-            "/favicon.ico"
-        }
-      );
-    }
-
-    console.log(
-      `TRADNEX favorite signal: ${selected} ${direction}`
-    );
-
-  } catch (error) {
-    console.error(
-      "Favorite signal notification error:",
-      error
-    );
-  }
-}
 async function loadSignal(){
 
   const {data,error} =
     await sb
       .from("signals")
       .select("*")
-      .eq("symbol", selected)
-      .in("status", [
-        "ACTIVE",
-        "MONITORING"
-      ])
-      .order("created_at", {
-        ascending:false
-      })
+      .eq(
+        "symbol",
+        selected
+      )
+      .in(
+        "status",
+        [
+          "ACTIVE",
+          "MONITORING"
+        ]
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
+      )
       .limit(1)
       .maybeSingle();
+
 
   if(error){
 
@@ -1311,89 +1252,133 @@ async function loadSignal(){
     renderSignal(null);
 
     return;
+
   }
+
 
   renderSignal(data);
 
+}
 
 
+// =========================================================
+// LOAD RECENT SIGNALS
+// =========================================================
 
 async function loadRecent(){
 
-const {data,error} =
-await sb
-.from("signals")
-.select("*")
-.in("status",[
-"ACTIVE",
-"MONITORING",
-"TP HIT",
-"SL HIT"
-])
-.order("created_at",{ascending:false})
-.limit(10);
+  const {data,error} =
+    await sb
+      .from("signals")
+      .select("*")
+      .in(
+        "status",
+        [
+          "ACTIVE",
+          "MONITORING",
+          "TP HIT",
+          "SL HIT"
+        ]
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
+      )
+      .limit(10);
 
-if(error){
 
-console.error(error);
+  if(error){
 
-return;
+    console.error(
+      "Recent signals loading failed:",
+      error
+    );
+
+    return;
+
+  }
+
+
+  if(
+    !data ||
+    !data.length
+  ){
+
+    $("recentSignals").innerHTML =
+      `
+      <tr>
+        <td
+          colspan="5"
+          class="lock"
+        >
+          No live signals available.
+        </td>
+      </tr>
+      `;
+
+    return;
+
+  }
+
+
+  $("recentSignals").innerHTML =
+    data.map(
+      s => `
+
+      <tr>
+
+        <td>
+          ${s.symbol || "—"}
+        </td>
+
+        <td class="${
+          s.direction === "BUY"
+            ? "buy"
+            :
+          s.direction === "SELL"
+            ? "sell"
+            :
+          ""
+        }">
+
+          ${s.direction || "—"}
+
+        </td>
+
+        <td>
+          ${s.entry ?? "—"}
+        </td>
+
+        <td>
+
+          ${
+            s.confidence != null
+              ? Number(s.confidence).toFixed(0) + "%"
+              : "—"
+          }
+
+        </td>
+
+        <td>
+
+          ${
+            s.created_at
+              ? new Date(
+                  s.created_at
+                ).toLocaleString()
+              : "—"
+          }
+
+        </td>
+
+      </tr>
+
+      `
+    ).join("");
 
 }
-
-if(!data || !data.length){
-
-$("recentSignals").innerHTML =
-`
-<tr>
-<td colspan="5" class="lock">
-No live signals available.
-</td>
-</tr>
-`;
-
-return;
-
-}
-
-$("recentSignals").innerHTML =
-data.map(s=>`
-
-<tr>
-
-<td>${s.symbol || "—"}</td>
-
-<td class="${
-s.direction==="BUY"
-?"buy"
-:
-s.direction==="SELL"
-?"sell"
-:""
-}">
-${s.direction || "—"}
-</td>
-
-<td>${s.entry ?? "—"}</td>
-
-<td>${
-s.confidence != null
-?Number(s.confidence).toFixed(0)+"%"
-:"—"
-}</td>
-
-<td>${
-s.created_at
-?new Date(s.created_at).toLocaleString()
-:"—"
-}</td>
-
-</tr>
-
-`).join("");
-
-}
-
 
 function showSection(id,button){
 
