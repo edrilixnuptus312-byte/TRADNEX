@@ -5,166 +5,252 @@ export default async function handler(req, res) {
     });
   }
 
-  /*
-   * =========================================================
-   * TRADNEX MULTI-MARKET SCANNER
-   *
-   * Every symbol is checked using the SAME:
-   *
-   * 4H → 15M TRADNEX strategy
-   *
-   * No separate strategy is used for different markets.
-   * =========================================================
-   */
+  try {
+    // =========================================================
+    // TRADNEX LIVE MULTI-MARKET SCANNER
+    // =========================================================
+    //
+    // Uses the official TRADNEX signal engine.
+    //
+    // 4 markets per batch
+    // 2 batches per minute
+    // = maximum 8 Twelve Data credits/minute
+    //
+    // 30 markets = 8 batches
+    // Full rotation = 4 minutes
+    //
+    // Strategy remains:
+    // 4H → 15M
+    //
+    // =========================================================
 
-  const symbols = [
-    // GOLD
-    "XAU/USD",
+    const baseUrl =
+      process.env.TRADNEX_BASE_URL ||
+      "https://tradnex.vercel.app";
 
-    // BITCOIN
-    "BTC/USD",
+    const batchSize = 4;
+    const totalMarkets = 30;
+    const totalBatches = Math.ceil(
+      totalMarkets / batchSize
+    );
 
-    // FOREX
-    "EUR/USD",
-    "GBP/USD",
-    "USD/JPY",
-    "USD/CHF",
-    "USD/CAD",
-    "AUD/USD",
-    "NZD/USD",
+    const batchesPerMinute = 2;
 
-    "EUR/GBP",
-    "EUR/JPY",
-    "EUR/CHF",
-    "EUR/AUD",
-    "EUR/CAD",
-    "EUR/NZD",
+    // Current minute
+    const minuteNumber =
+      Math.floor(Date.now() / 60000);
 
-    "GBP/JPY",
-    "GBP/CHF",
-    "GBP/AUD",
-    "GBP/CAD",
-    "GBP/NZD",
+    // Four-minute rotation:
+    //
+    // Minute 0 → batches 0,1
+    // Minute 1 → batches 2,3
+    // Minute 2 → batches 4,5
+    // Minute 3 → batches 6,7
+    // Then repeat.
+    //
+    const rotationLength =
+      Math.ceil(
+        totalBatches / batchesPerMinute
+      );
 
-    "AUD/JPY",
-    "AUD/CAD",
-    "AUD/CHF",
-    "AUD/NZD",
+    const rotation =
+      minuteNumber % rotationLength;
 
-    "CAD/JPY",
-    "CAD/CHF",
+    const firstBatch =
+      rotation * batchesPerMinute;
 
-    "CHF/JPY",
+    const batchNumbers = [];
 
-    "NZD/JPY",
-    "NZD/CAD",
-    "NZD/CHF"
-  ];
+    for (
+      let i = 0;
+      i < batchesPerMinute;
+      i++
+    ) {
+      const batchNumber =
+        firstBatch + i;
 
-  /*
-   * =========================================================
-   * FIND THE LIVE TRADNEX URL
-   * =========================================================
-   */
-
-  const baseUrl =
-    process.env.TRADNEX_BASE_URL ||
-    "https://tradnex.vercel.app";
-
-  const results = [];
-
-  /*
-   * =========================================================
-   * SCAN EACH MARKET
-   *
-   * Sequential scanning keeps the requests controlled.
-   * =========================================================
-   */
-
-  for (const symbol of symbols) {
-    try {
-      const url =
-        `${baseUrl}/api/signal-engine?symbol=` +
-        encodeURIComponent(symbol);
-
-      const response = await fetch(url);
-
-      let data;
-
-      try {
-        data = await response.json();
-      } catch {
-        data = {
-          error: "Invalid response from signal engine"
-        };
+      if (batchNumber < totalBatches) {
+        batchNumbers.push(batchNumber);
       }
-
-      results.push({
-        symbol,
-        httpStatus: response.status,
-        status: data.status || "UNKNOWN",
-        signal: data.signal || null,
-        confidence:
-          data.confidence ??
-          data.signal?.confidence ??
-          null,
-        signalTime:
-          data.signalTime ??
-          data.signal?.message ??
-          null
-      });
-
-    } catch (error) {
-      results.push({
-        symbol,
-        httpStatus: 500,
-        status: "ERROR",
-        signal: null,
-        confidence: null,
-        error: error.message
-      });
     }
+
+    const results = [];
+    const batchReports = [];
+
+    // =========================================================
+    // RUN THE SELECTED BATCHES
+    // =========================================================
+
+    for (const batchNumber of batchNumbers) {
+      try {
+        const url =
+          `${baseUrl}/api/signal-engine` +
+          `?all=true` +
+          `&batch=${batchNumber}`;
+
+        const response =
+          await fetch(url);
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {
+            error:
+              "Invalid response from signal engine"
+          };
+        }
+
+        if (!response.ok) {
+          batchReports.push({
+            batch: batchNumber,
+            status: "ERROR",
+            httpStatus: response.status,
+            details: data
+          });
+
+          continue;
+        }
+
+        const batchResults =
+          Array.isArray(data.results)
+            ? data.results
+            : [];
+
+        results.push(
+          ...batchResults
+        );
+
+        batchReports.push({
+          batch: batchNumber,
+          status: "OK",
+          scanned:
+            data.scanned ??
+            batchResults.length,
+          signalsCreated:
+            data.signalsCreated ??
+            0,
+          noSignal:
+            data.noSignal ??
+            0
+        });
+
+      } catch (error) {
+        batchReports.push({
+          batch: batchNumber,
+          status: "ERROR",
+          error: error.message
+        });
+      }
+    }
+
+    // =========================================================
+    // REMOVE DUPLICATES
+    // =========================================================
+
+    const uniqueResults =
+      Array.from(
+        new Map(
+          results.map(item => [
+            item.symbol,
+            item
+          ])
+        ).values()
+      );
+
+    // =========================================================
+    // REAL SIGNALS ONLY
+    // =========================================================
+
+    const signals =
+      uniqueResults.filter(
+        item =>
+          item &&
+          item.signal
+      );
+
+    // =========================================================
+    // CACHE
+    // =========================================================
+
+    res.setHeader(
+      "Cache-Control",
+      "s-maxage=60, stale-while-revalidate=30"
+    );
+
+    // =========================================================
+    // FINAL RESPONSE
+    // =========================================================
+
+    return res.status(200).json({
+
+      scanner:
+        "TRADNEX LIVE SCANNER",
+
+      strategy:
+        "TRADNEX 4H → 15M",
+
+      status:
+        signals.length > 0
+          ? "SIGNALS_FOUND"
+          : "NO_SIGNALS",
+
+      rotation:
+        `${rotation + 1}/${rotationLength}`,
+
+      batches:
+        batchNumbers,
+
+      marketsScanned:
+        uniqueResults.length,
+
+      marketsPerBatch:
+        batchSize,
+
+      totalMarkets:
+        totalMarkets,
+
+      totalBatches:
+        totalBatches,
+
+      signalsFound:
+        signals.length,
+
+      signals,
+
+      results:
+        uniqueResults,
+
+      batchReports,
+
+      nextRotationInSeconds:
+        60 -
+        (
+          Math.floor(
+            Date.now() / 1000
+          ) % 60
+        ),
+
+      scannedAt:
+        new Date().toISOString()
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+
+      scanner:
+        "TRADNEX LIVE SCANNER",
+
+      strategy:
+        "TRADNEX 4H → 15M",
+
+      status:
+        "ERROR",
+
+      error:
+        error.message
+    });
   }
-
-  /*
-   * =========================================================
-   * FIND REAL SIGNALS
-   * =========================================================
-   */
-
-  const signals = results.filter(
-    item =>
-      item.signal &&
-      (
-        item.status === "SIGNAL_CREATED" ||
-        item.status === "ALREADY_RECORDED"
-      )
-  );
-
-  /*
-   * =========================================================
-   * FINAL RESPONSE
-   * =========================================================
-   */
-
-  return res.status(200).json({
-    scanner: "TRADNEX MULTI-MARKET SCANNER",
-
-    strategy: "TRADNEX 4H → 15M",
-
-    status:
-      signals.length > 0
-        ? "SIGNALS_FOUND"
-        : "NO_SIGNALS",
-
-    marketsScanned: symbols.length,
-
-    signalsFound: signals.length,
-
-    signals,
-
-    results,
-
-    scannedAt: new Date().toISOString()
-  });
 }
