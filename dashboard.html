@@ -788,458 +788,657 @@ TRADNEX account settings.
 </div>
 
 
-<script>
-
 const SUPABASE_URL =
-"https://jgapathoxwkojfecqbdi.supabase.co";
+  "https://jgapathoxwkojfecqbdi.supabase.co";
 
 const SUPABASE_KEY =
-"sb_publishable_uwfsQ-4Fod_rpoGlq6KbGg_VFj2TSGS";
+  "sb_publishable_uwfsQ-4Fod_rpoGlq6KbGg_VFj2TSGS";
 
 const sb =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY
-);
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
+
+// =========================================================
+// TRADNEX OFFICIAL MARKET UNIVERSE
+// =========================================================
 
 const instruments = [
 
-["XAUUSD","Gold Spot / U.S. Dollar"],
-["EURUSD","Euro / U.S. Dollar"],
-["GBPUSD","British Pound / U.S. Dollar"],
-["USDJPY","U.S. Dollar / Japanese Yen"],
-["USDCHF","U.S. Dollar / Swiss Franc"],
-["USDCAD","U.S. Dollar / Canadian Dollar"],
-["AUDUSD","Australian Dollar / U.S. Dollar"],
-["NZDUSD","New Zealand Dollar / U.S. Dollar"],
+  ["XAUUSD","Gold Spot / U.S. Dollar"],
 
-["EURGBP","Euro / British Pound"],
-["EURJPY","Euro / Japanese Yen"],
-["EURCHF","Euro / Swiss Franc"],
-["EURAUD","Euro / Australian Dollar"],
-["EURCAD","Euro / Canadian Dollar"],
-["EURNZD","Euro / New Zealand Dollar"],
+  ["EURUSD","Euro / U.S. Dollar"],
+  ["GBPUSD","British Pound / U.S. Dollar"],
+  ["USDJPY","U.S. Dollar / Japanese Yen"],
+  ["USDCHF","U.S. Dollar / Swiss Franc"],
+  ["USDCAD","U.S. Dollar / Canadian Dollar"],
+  ["AUDUSD","Australian Dollar / U.S. Dollar"],
+  ["NZDUSD","New Zealand Dollar / U.S. Dollar"],
 
-["GBPJPY","British Pound / Japanese Yen"],
-["GBPCHF","British Pound / Swiss Franc"],
-["GBPAUD","British Pound / Australian Dollar"],
-["GBPCAD","British Pound / Canadian Dollar"],
-["GBPNZD","British Pound / New Zealand Dollar"],
+  ["EURGBP","Euro / British Pound"],
+  ["EURJPY","Euro / Japanese Yen"],
+  ["EURCHF","Euro / Swiss Franc"],
+  ["EURAUD","Euro / Australian Dollar"],
+  ["EURCAD","Euro / Canadian Dollar"],
+  ["EURNZD","Euro / New Zealand Dollar"],
 
-["AUDJPY","Australian Dollar / Japanese Yen"],
-["AUDCAD","Australian Dollar / Canadian Dollar"],
-["AUDCHF","Australian Dollar / Swiss Franc"],
-["AUDNZD","Australian Dollar / New Zealand Dollar"],
+  ["GBPJPY","British Pound / Japanese Yen"],
+  ["GBPCHF","British Pound / Swiss Franc"],
+  ["GBPAUD","British Pound / Australian Dollar"],
+  ["GBPCAD","British Pound / Canadian Dollar"],
+  ["GBPNZD","British Pound / New Zealand Dollar"],
 
-["CADJPY","Canadian Dollar / Japanese Yen"],
-["CADCHF","Canadian Dollar / Swiss Franc"],
-["CHFJPY","Swiss Franc / Japanese Yen"],
+  ["AUDJPY","Australian Dollar / Japanese Yen"],
+  ["AUDCAD","Australian Dollar / Canadian Dollar"],
+  ["AUDCHF","Australian Dollar / Swiss Franc"],
+  ["AUDNZD","Australian Dollar / New Zealand Dollar"],
 
-["NZDJPY","New Zealand Dollar / Japanese Yen"],
-["NZDCAD","New Zealand Dollar / Canadian Dollar"],
-["NZDCHF","New Zealand Dollar / Swiss Franc"],
+  ["CADJPY","Canadian Dollar / Japanese Yen"],
+  ["CADCHF","Canadian Dollar / Swiss Franc"],
+  ["CHFJPY","Swiss Franc / Japanese Yen"],
 
-["BTCUSD","Bitcoin / U.S. Dollar"],
-["US30","Dow Jones"],
-["NAS100","Nasdaq 100"],
-["USOIL","Crude Oil"]
+  ["NZDJPY","New Zealand Dollar / Japanese Yen"],
+  ["NZDCAD","New Zealand Dollar / Canadian Dollar"],
+  ["NZDCHF","New Zealand Dollar / Swiss Franc"],
+
+  ["BTCUSD","Bitcoin / U.S. Dollar"]
 
 ];
 
 
-let selected = "XAUUSD";
+// =========================================================
+// STATE
+// =========================================================
+
+let selected =
+  localStorage.getItem(
+    "tradnex_selected"
+  ) || "XAUUSD";
+
+if(
+  !instruments.some(
+    item => item[0] === selected
+  )
+){
+  selected = "XAUUSD";
+}
+
 let currentSignal = null;
 
+let lastFavoriteSignalKey = null;
+
+let scannerBusy = false;
+
+
+// =========================================================
+// HELPERS
+// =========================================================
 
 function $(id){
-return document.getElementById(id);
+
+  return document.getElementById(id);
+
 }
 
 
+function databaseSymbol(symbol){
+
+  if(symbol === "XAUUSD"){
+    return "XAU/USD";
+  }
+
+  if(symbol === "BTCUSD"){
+    return "BTC/USD";
+  }
+
+  if(
+    /^[A-Z]{6}$/.test(symbol)
+  ){
+
+    return (
+      symbol.substring(0,3) +
+      "/" +
+      symbol.substring(3)
+    );
+
+  }
+
+  return symbol;
+
+}
+
+
+function dashboardSymbol(symbol){
+
+  return String(
+    symbol || ""
+  )
+  .replace("/","")
+  .toUpperCase();
+
+}
+
+
+function instrumentInfo(symbol){
+
+  return instruments.find(
+    item => item[0] === symbol
+  );
+
+}
+
+
+function calculateRR(
+  entry,
+  sl,
+  tp
+){
+
+  if(
+    entry == null ||
+    sl == null ||
+    tp == null
+  ){
+
+    return "—";
+
+  }
+
+  const risk =
+    Math.abs(
+      Number(entry) -
+      Number(sl)
+    );
+
+  const reward =
+    Math.abs(
+      Number(tp) -
+      Number(entry)
+    );
+
+  if(
+    !risk ||
+    !Number.isFinite(risk)
+  ){
+
+    return "—";
+
+  }
+
+  return (
+    reward / risk
+  ).toFixed(2) + "R";
+
+}
+
+
+// =========================================================
+// MARKET BUTTONS
+// =========================================================
+
 function renderMarkets(){
 
-$("markets").innerHTML = "";
+  const container =
+    $("markets");
 
-instruments.slice(0,8).forEach(item=>{
+  if(!container){
+    return;
+  }
 
-const b = document.createElement("button");
+  container.innerHTML = "";
 
-b.className =
-"market-btn " +
-(item[0]===selected ? "active" : "");
+  instruments
+    .slice(0,8)
+    .forEach(item => {
 
-b.textContent = item[0];
+      const button =
+        document.createElement(
+          "button"
+        );
 
-b.onclick = ()=>{
+      button.className =
+        "market-btn" +
+        (
+          item[0] === selected
+            ? " active"
+            : ""
+        );
 
-selected = item[0];
+      button.textContent =
+        item[0];
 
-renderMarkets();
-renderInstruments();
-loadSignal();
+      button.onclick =
+        () => {
 
-};
+          selectInstrument(
+            item[0]
+          );
 
-$("markets").appendChild(b);
+        };
 
-});
+      container.appendChild(
+        button
+      );
+
+    });
 
 }
 
 
 function renderInstruments(){
 
-$("instrumentList").innerHTML = "";
+  const container =
+    $("instrumentList");
 
-instruments.forEach(item=>{
-
-const b = document.createElement("button");
-
-b.textContent = item[0];
-
-if(item[0]===selected)
-b.classList.add("active");
-
-b.onclick = ()=>{
-
-selected = item[0];
-
-renderMarkets();
-renderInstruments();
-loadSignal();
-
-};
-
-$("instrumentList").appendChild(b);
-
-});
-
-}
-
-
-function renderSignal(signal){
-
-currentSignal = signal;
-
-if(!signal){
-
-$("symbol").textContent = selected;
-
-const info =
-instruments.find(x=>x[0]===selected);
-
-$("instrumentName").textContent =
-info ? info[1] : "";
-
-$("signalStatus").textContent =
-"WAITING FOR LIVE SIGNAL";
-
-$("direction").textContent =
-"NO SIGNAL";
-
-$("direction").className =
-"signal-direction neutral";
-
-$("entry").textContent="—";
-$("sl").textContent="—";
-$("tp").textContent="—";
-$("rr").textContent="—";
-$("confidence").textContent="—";
-$("signalTime").textContent="—";
-
-$("signalReason").textContent =
-"Waiting for a genuine 4H → 15M confirmation.";
-
-updateAI(null);
-
-return;
-
-}
-
-
-$("symbol").textContent =
-signal.symbol || selected;
-
-const info =
-instruments.find(x=>x[0]===selected);
-
-$("instrumentName").textContent =
-info ? info[1] : "";
-
-$("signalStatus").textContent =
-signal.status || "ACTIVE";
-
-$("direction").textContent =
-signal.direction || "—";
-
-$("direction").className =
-"signal-direction " +
-(
-signal.direction==="BUY"
-?"buy"
-:
-signal.direction==="SELL"
-?"sell"
-:"neutral"
-);
-
-$("entry").textContent =
-signal.entry ?? "—";
-
-$("sl").textContent =
-signal.stop_loss ?? "—";
-
-$("tp").textContent =
-signal.take_profit ?? "—";
-
-$("rr").textContent =
-calculateRR(
-signal.entry,
-signal.stop_loss,
-signal.take_profit
-);
-
-$("confidence").textContent =
-signal.confidence != null
-? Number(signal.confidence).toFixed(0)+"%"
-:"—";
-
-$("signalTime").textContent =
-signal.created_at
-? new Date(signal.created_at).toLocaleString()
-:"—";
-
-$("signalReason").textContent =
-signal.signal_reason ||
-signal.setup ||
-signal.message ||
-"TRADNEX 4H → 15M confirmation.";
-
-updateAI(signal);
-
-}
-
-
-function calculateRR(entry,sl,tp){
-
-if(
-entry==null ||
-sl==null ||
-tp==null
-)return "—";
-
-const risk =
-Math.abs(Number(entry)-Number(sl));
-
-const reward =
-Math.abs(Number(tp)-Number(entry));
-
-if(!risk || !isFinite(risk))
-return "—";
-
-return (reward/risk).toFixed(2)+"R";
-
-}
-
-
-function updateAI(signal){
-
-if(!signal){
-
-$("aiPrediction").textContent="WAITING";
-$("aiConfidence").textContent="—";
-$("aiBias").textContent="WAITING";
-$("aiMomentum").textContent="WAITING";
-$("aiVolatility").textContent="WAITING";
-$("aiConfirmation").textContent="PENDING";
-
-$("aiInsight").textContent =
-"No live market data is currently available.";
-
-$("aiReason").textContent =
-"AI analysis will appear when verified market data and a genuine TRADNEX setup are available.";
-
-$("aiWarning").textContent =
-"No live trading recommendation is being generated.";
-
-return;
-
-}
-
-
-const direction =
-signal.direction || "NEUTRAL";
-
-const confidence =
-signal.confidence != null
-? Number(signal.confidence)
-:null;
-
-
-$("aiPrediction").textContent =
-direction;
-
-$("aiConfidence").textContent =
-confidence != null
-? confidence.toFixed(0)+"%"
-:"—";
-
-$("aiBias").textContent =
-direction==="BUY"
-?"BULLISH"
-:
-direction==="SELL"
-?"BEARISH"
-:"NEUTRAL";
-
-$("aiMomentum").textContent =
-confidence==null
-?"PENDING"
-:
-confidence>=80
-?"STRONG"
-:
-confidence>=60
-?"MODERATE"
-:"WEAK";
-
-$("aiVolatility").textContent =
-"DATA REQUIRED";
-
-$("aiConfirmation").textContent =
-"TRADNEX "+direction;
-
-$("aiInsight").textContent =
-signal.signal_reason ||
-signal.setup ||
-signal.message ||
-"TRADNEX has confirmed a 4H → 15M setup.";
-
-$("aiReason").textContent =
-direction==="BUY"
-?
-"TRADNEX confirmed a BUY direction. AI context should be used as additional information, not as a replacement for the 4H → 15M confirmation."
-:
-direction==="SELL"
-?
-"TRADNEX confirmed a SELL direction. AI context should be used as additional information, not as a replacement for the 4H → 15M confirmation."
-:
-"Market direction is currently neutral.";
-
-$("aiWarning").textContent =
-confidence != null && confidence < 60
-?
-"Confidence is below the preferred threshold. Wait for stronger confirmation."
-:
-"Always verify market conditions and risk before trading.";
-
-}
-
-// =========================================================
-// TRADNEX FAVORITE SIGNAL NOTIFICATIONS
-// =========================================================
-
-let lastFavoriteSignalKey = null;
-
-function checkFavoriteSignal(signalData){
-
-  if(!signalData || !selected){
+  if(!container){
     return;
   }
 
-  const direction =
-    String(
-      signalData.direction || ""
-    ).toUpperCase();
+  container.innerHTML = "";
 
-  if(
-    direction !== "BUY" &&
-    direction !== "SELL"
-  ){
-    return;
-  }
+  instruments.forEach(
+    item => {
 
-  const signalTime =
-    signalData.signalTime ||
-    signalData.created_at ||
-    signalData.createdAt ||
-    "";
+      const button =
+        document.createElement(
+          "button"
+        );
 
-  const signalKey =
-    `${selected}-${direction}-${signalTime}`;
+      button.textContent =
+        item[0];
 
-  if(
-    signalKey === lastFavoriteSignalKey
-  ){
-    return;
-  }
+      if(
+        item[0] === selected
+      ){
 
-  lastFavoriteSignalKey =
-    signalKey;
+        button.classList.add(
+          "active"
+        );
 
-  if(
-    "Notification" in window &&
-    Notification.permission === "default"
-  ){
-
-    Notification.requestPermission();
-
-  }
-
-  if(
-    "Notification" in window &&
-    Notification.permission === "granted"
-  ){
-
-    new Notification(
-      `TRADNEX: ${selected} ${direction}`,
-      {
-        body:
-          `New ${direction} signal confirmed on ${selected} using the TRADNEX 4H → 15M strategy.`,
-        icon:
-          "/favicon.ico"
       }
-    );
 
-  }
+      button.onclick =
+        () => {
 
-  console.log(
-    `TRADNEX favorite signal: ${selected} ${direction}`
+          selectInstrument(
+            item[0]
+          );
+
+        };
+
+      container.appendChild(
+        button
+      );
+
+    }
   );
 
 }
 
 
+function selectInstrument(
+  symbol
+){
+
+  selected = symbol;
+
+  localStorage.setItem(
+    "tradnex_selected",
+    selected
+  );
+
+  renderMarkets();
+
+  renderInstruments();
+
+  loadSignal();
+
+}
+
+
 // =========================================================
-// LOAD CURRENT SIGNAL
+// MAIN SIGNAL DISPLAY
+// =========================================================
+
+function renderSignal(
+  signal
+){
+
+  currentSignal =
+    signal;
+
+  const info =
+    instrumentInfo(
+      selected
+    );
+
+  if($("symbol")){
+
+    $("symbol")
+      .textContent =
+      selected;
+
+  }
+
+  if($("instrumentName")){
+
+    $("instrumentName")
+      .textContent =
+      info
+        ? info[1]
+        : "";
+
+  }
+
+
+  if(!signal){
+
+    $("signalStatus")
+      .textContent =
+      "WAITING FOR LIVE SIGNAL";
+
+    $("direction")
+      .textContent =
+      "NO SIGNAL";
+
+    $("direction").className =
+      "signal-direction neutral";
+
+    $("entry")
+      .textContent = "—";
+
+    $("sl")
+      .textContent = "—";
+
+    $("tp")
+      .textContent = "—";
+
+    $("rr")
+      .textContent = "—";
+
+    $("confidence")
+      .textContent = "—";
+
+    $("signalTime")
+      .textContent = "—";
+
+    $("signalReason")
+      .textContent =
+      "Waiting for a genuine 4H → 15M confirmation.";
+
+    updateAI(null);
+
+    return;
+
+  }
+
+
+  const direction =
+    String(
+      signal.direction || ""
+    ).toUpperCase();
+
+
+  $("signalStatus")
+    .textContent =
+    signal.status ||
+    "ACTIVE";
+
+
+  $("direction")
+    .textContent =
+    direction || "—";
+
+
+  $("direction").className =
+    "signal-direction " +
+    (
+      direction === "BUY"
+        ? "buy"
+        :
+      direction === "SELL"
+        ? "sell"
+        :
+        "neutral"
+    );
+
+
+  $("entry")
+    .textContent =
+    signal.entry ?? "—";
+
+
+  $("sl")
+    .textContent =
+    signal.stop_loss ?? "—";
+
+
+  $("tp")
+    .textContent =
+    signal.take_profit ?? "—";
+
+
+  $("rr")
+    .textContent =
+    calculateRR(
+      signal.entry,
+      signal.stop_loss,
+      signal.take_profit
+    );
+
+
+  $("confidence")
+    .textContent =
+    signal.confidence != null
+      ? Number(
+          signal.confidence
+        ).toFixed(0) + "%"
+      : "—";
+
+
+  $("signalTime")
+    .textContent =
+    signal.created_at
+      ? new Date(
+          signal.created_at
+        ).toLocaleString()
+      : "—";
+
+
+  $("signalReason")
+    .textContent =
+    signal.signal_reason ||
+    signal.setup ||
+    signal.message ||
+    "TRADNEX 4H → 15M confirmation.";
+
+
+  updateAI(signal);
+
+}
+
+
+// =========================================================
+// AI DISPLAY
+// =========================================================
+
+function updateAI(
+  signal
+){
+
+  if(!signal){
+
+    $("aiPrediction")
+      .textContent =
+      "WAITING";
+
+    $("aiConfidence")
+      .textContent =
+      "—";
+
+    $("aiBias")
+      .textContent =
+      "WAITING";
+
+    $("aiMomentum")
+      .textContent =
+      "WAITING";
+
+    $("aiVolatility")
+      .textContent =
+      "WAITING";
+
+    $("aiConfirmation")
+      .textContent =
+      "PENDING";
+
+    $("aiInsight")
+      .textContent =
+      "No active TRADNEX signal is available for this market.";
+
+    $("aiReason")
+      .textContent =
+      "AI context remains secondary to the core 4H → 15M confirmation.";
+
+    $("aiWarning")
+      .textContent =
+      "No live trading recommendation is being generated.";
+
+    return;
+
+  }
+
+
+  const direction =
+    String(
+      signal.direction ||
+      "NEUTRAL"
+    ).toUpperCase();
+
+
+  const confidence =
+    signal.confidence != null
+      ? Number(
+          signal.confidence
+        )
+      : null;
+
+
+  $("aiPrediction")
+    .textContent =
+    direction;
+
+
+  $("aiConfidence")
+    .textContent =
+    confidence != null
+      ? confidence.toFixed(0) + "%"
+      : "—";
+
+
+  $("aiBias")
+    .textContent =
+    direction === "BUY"
+      ? "BULLISH"
+      :
+    direction === "SELL"
+      ? "BEARISH"
+      :
+      "NEUTRAL";
+
+
+  $("aiMomentum")
+    .textContent =
+    confidence == null
+      ? "PENDING"
+      :
+    confidence >= 80
+      ? "STRONG"
+      :
+    confidence >= 60
+      ? "MODERATE"
+      :
+      "WEAK";
+
+
+  $("aiVolatility")
+    .textContent =
+    "DATA REQUIRED";
+
+
+  $("aiConfirmation")
+    .textContent =
+    "TRADNEX " +
+    direction;
+
+
+  $("aiInsight")
+    .textContent =
+    signal.signal_reason ||
+    signal.setup ||
+    signal.message ||
+    "TRADNEX has confirmed a 4H → 15M setup.";
+
+
+  $("aiReason")
+    .textContent =
+    direction === "BUY"
+      ?
+      "TRADNEX confirmed BUY using the core 4H → 15M rules. AI context does not replace that confirmation."
+      :
+    direction === "SELL"
+      ?
+      "TRADNEX confirmed SELL using the core 4H → 15M rules. AI context does not replace that confirmation."
+      :
+      "Market direction is currently neutral.";
+
+
+  $("aiWarning")
+    .textContent =
+    "Always verify market conditions and risk before trading.";
+
+}
+
+
+// =========================================================
+// SUPABASE CURRENT SIGNAL
 // =========================================================
 
 async function loadSignal(){
 
-  const {data,error} =
-    await sb
-      .from("signals")
-      .select("*")
-      .eq(
-        "symbol",
-        selected
-      )
-      .in(
-        "status",
-        [
-          "ACTIVE",
-          "MONITORING"
-        ]
-      )
-      .order(
-        "created_at",
-        {
-          ascending:false
-        }
-      )
-      .limit(1)
-      .maybeSingle();
+  const symbol =
+    databaseSymbol(
+      selected
+    );
+
+
+  const {
+    data,
+    error
+  } = await sb
+    .from("signals")
+    .select("*")
+    .eq(
+      "symbol",
+      symbol
+    )
+    .in(
+      "status",
+      [
+        "ACTIVE",
+        "MONITORING"
+      ]
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    )
+    .limit(1)
+    .maybeSingle();
 
 
   if(error){
@@ -1256,37 +1455,49 @@ async function loadSignal(){
   }
 
 
-  renderSignal(data);
+  renderSignal(
+    data
+  );
 
 }
 
 
 // =========================================================
-// LOAD RECENT SIGNALS
+// RECENT SIGNALS
 // =========================================================
 
 async function loadRecent(){
 
-  const {data,error} =
-    await sb
-      .from("signals")
-      .select("*")
-      .in(
-        "status",
-        [
-          "ACTIVE",
-          "MONITORING",
-          "TP HIT",
-          "SL HIT"
-        ]
-      )
-      .order(
-        "created_at",
-        {
-          ascending:false
-        }
-      )
-      .limit(10);
+  const table =
+    $("recentSignals");
+
+  if(!table){
+    return;
+  }
+
+
+  const {
+    data,
+    error
+  } = await sb
+    .from("signals")
+    .select("*")
+    .in(
+      "status",
+      [
+        "ACTIVE",
+        "MONITORING",
+        "TP HIT",
+        "SL HIT"
+      ]
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    )
+    .limit(10);
 
 
   if(error){
@@ -1306,8 +1517,7 @@ async function loadRecent(){
     !data.length
   ){
 
-    $("recentSignals").innerHTML =
-      `
+    table.innerHTML = `
       <tr>
         <td
           colspan="5"
@@ -1316,83 +1526,1218 @@ async function loadRecent(){
           No live signals available.
         </td>
       </tr>
-      `;
+    `;
 
     return;
 
   }
 
 
-  $("recentSignals").innerHTML =
-    data.map(
-      s => `
+  table.innerHTML =
+    data
+      .map(
+        signal => `
 
-      <tr>
+          <tr>
 
-        <td>
-          ${s.symbol || "—"}
-        </td>
+            <td>
+              ${dashboardSymbol(
+                signal.symbol
+              )}
+            </td>
 
-        <td class="${
-          s.direction === "BUY"
-            ? "buy"
-            :
-          s.direction === "SELL"
-            ? "sell"
-            :
-          ""
-        }">
+            <td class="${
+              signal.direction === "BUY"
+                ? "buy"
+                :
+              signal.direction === "SELL"
+                ? "sell"
+                :
+                ""
+            }">
 
-          ${s.direction || "—"}
+              ${
+                signal.direction ||
+                "—"
+              }
 
-        </td>
+            </td>
 
-        <td>
-          ${s.entry ?? "—"}
-        </td>
+            <td>
+              ${
+                signal.entry ??
+                "—"
+              }
+            </td>
 
-        <td>
+            <td>
+              ${
+                signal.confidence != null
+                  ?
+                  Number(
+                    signal.confidence
+                  ).toFixed(0) + "%"
+                  :
+                  "—"
+              }
+            </td>
 
-          ${
-            s.confidence != null
-              ? Number(s.confidence).toFixed(0) + "%"
-              : "—"
-          }
+            <td>
+              ${
+                signal.created_at
+                  ?
+                  new Date(
+                    signal.created_at
+                  ).toLocaleString()
+                  :
+                  "—"
+              }
+            </td>
 
-        </td>
+          </tr>
 
-        <td>
-
-          ${
-            s.created_at
-              ? new Date(
-                  s.created_at
-                ).toLocaleString()
-              : "—"
-          }
-
-        </td>
-
-      </tr>
-
-      `
-    ).join("");
+        `
+      )
+      .join("");
 
 }
+
+
 // =========================================================
-// TRADNEX LIVE SCANNER CONNECTION
+// SIGNAL HISTORY
+// =========================================================
+
+async function loadHistory(){
+
+  const table =
+    $("historyTable");
+
+  if(!table){
+    return;
+  }
+
+
+  const {
+    data,
+    error
+  } = await sb
+    .from("signals")
+    .select("*")
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    )
+    .limit(100);
+
+
+  if(error){
+
+    console.error(
+      "History loading failed:",
+      error
+    );
+
+    table.innerHTML = `
+      <tr>
+        <td
+          colspan="6"
+          class="lock"
+        >
+          Unable to load signal history.
+        </td>
+      </tr>
+    `;
+
+    return;
+
+  }
+
+
+  if(
+    !data ||
+    !data.length
+  ){
+
+    table.innerHTML = `
+      <tr>
+        <td
+          colspan="6"
+          class="lock"
+        >
+          No signal history available.
+        </td>
+      </tr>
+    `;
+
+    return;
+
+  }
+
+
+  table.innerHTML =
+    data
+      .map(
+        signal => `
+
+          <tr>
+
+            <td>
+              ${dashboardSymbol(
+                signal.symbol
+              )}
+            </td>
+
+            <td class="${
+              signal.direction === "BUY"
+                ? "buy"
+                :
+              signal.direction === "SELL"
+                ? "sell"
+                :
+                ""
+            }">
+
+              ${
+                signal.direction ||
+                "—"
+              }
+
+            </td>
+
+            <td>
+              ${
+                signal.entry ??
+                "—"
+              }
+            </td>
+
+            <td>
+              ${
+                signal.stop_loss ??
+                "—"
+              }
+            </td>
+
+            <td>
+              ${
+                signal.take_profit ??
+                "—"
+              }
+            </td>
+
+            <td>
+              ${
+                signal.created_at
+                  ?
+                  new Date(
+                    signal.created_at
+                  ).toLocaleString()
+                  :
+                  "—"
+              }
+            </td>
+
+          </tr>
+
+        `
+      )
+      .join("");
+
+}
+
+
+// =========================================================
+// PERFORMANCE
+// =========================================================
+
+async function loadPerformance(){
+
+  const section =
+    $("performance");
+
+  if(!section){
+    return;
+  }
+
+
+  const {
+    data,
+    error
+  } = await sb
+    .from("signals")
+    .select(
+      "symbol,direction,status,created_at"
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    )
+    .limit(500);
+
+
+  if(error){
+
+    console.error(
+      "Performance loading failed:",
+      error
+    );
+
+    return;
+
+  }
+
+
+  const rows =
+    data || [];
+
+
+  const completed =
+    rows.filter(
+      signal =>
+        signal.status === "TP HIT" ||
+        signal.status === "SL HIT"
+    );
+
+
+  const wins =
+    completed.filter(
+      signal =>
+        signal.status === "TP HIT"
+    ).length;
+
+
+  const losses =
+    completed.filter(
+      signal =>
+        signal.status === "SL HIT"
+    ).length;
+
+
+  const winRate =
+    completed.length
+      ?
+      (
+        wins /
+        completed.length *
+        100
+      ).toFixed(1) + "%"
+      :
+      "—";
+
+
+  const active =
+    rows.filter(
+      signal =>
+        signal.status === "ACTIVE" ||
+        signal.status === "MONITORING"
+    ).length;
+
+
+  section.innerHTML = `
+
+    <h2>▥ Performance</h2>
+
+    <div class="ai-grid">
+
+      <div class="ai-box">
+        <small>TOTAL SIGNALS</small>
+        <strong>
+          ${rows.length}
+        </strong>
+      </div>
+
+      <div class="ai-box">
+        <small>COMPLETED</small>
+        <strong>
+          ${completed.length}
+        </strong>
+      </div>
+
+      <div class="ai-box">
+        <small>TP HIT</small>
+        <strong>
+          ${wins}
+        </strong>
+      </div>
+
+      <div class="ai-box">
+        <small>SL HIT</small>
+        <strong>
+          ${losses}
+        </strong>
+      </div>
+
+      <div class="ai-box">
+        <small>COMPLETION WIN RATE</small>
+        <strong>
+          ${winRate}
+        </strong>
+      </div>
+
+      <div class="ai-box">
+        <small>ACTIVE</small>
+        <strong>
+          ${active}
+        </strong>
+      </div>
+
+    </div>
+
+    <div class="reason">
+
+      Statistics are calculated only from
+      verified records stored in the TRADNEX
+      signals table.
+
+      <br><br>
+
+      They are historical measurements,
+      not predictions.
+
+    </div>
+
+  `;
+
+}
+
+
+// =========================================================
+// FAVORITES
+// =========================================================
+
+function getFavorites(){
+
+  try{
+
+    return JSON.parse(
+      localStorage.getItem(
+        "tradnex_favorites"
+      ) || "[]"
+    );
+
+  }catch(error){
+
+    return [];
+
+  }
+
+}
+
+
+function saveFavorites(
+  favorites
+){
+
+  localStorage.setItem(
+    "tradnex_favorites",
+    JSON.stringify(
+      favorites
+    )
+  );
+
+}
+
+
+function toggleFavorite(
+  symbol
+){
+
+  const favorites =
+    getFavorites();
+
+  const index =
+    favorites.indexOf(
+      symbol
+    );
+
+
+  if(index >= 0){
+
+    favorites.splice(
+      index,
+      1
+    );
+
+  }else{
+
+    favorites.push(
+      symbol
+    );
+
+  }
+
+
+  saveFavorites(
+    favorites
+  );
+
+  renderNotifications();
+
+  renderInstruments();
+
+}
+
+
+function notifyFavoriteSignal(
+  signal
+){
+
+  if(!signal){
+    return;
+  }
+
+
+  const symbol =
+    dashboardSymbol(
+      signal.symbol
+    );
+
+
+  const favorites =
+    getFavorites();
+
+
+  if(
+    !favorites.includes(
+      symbol
+    )
+  ){
+
+    return;
+
+  }
+
+
+  const direction =
+    String(
+      signal.direction ||
+      ""
+    ).toUpperCase();
+
+
+  if(
+    direction !== "BUY" &&
+    direction !== "SELL"
+  ){
+
+    return;
+
+  }
+
+
+  const key =
+    symbol +
+    "-" +
+    direction +
+    "-" +
+    (
+      signal.created_at ||
+      ""
+    );
+
+
+  if(
+    key ===
+    lastFavoriteSignalKey
+  ){
+
+    return;
+
+  }
+
+
+  lastFavoriteSignalKey =
+    key;
+
+
+  if(
+    "Notification" in window &&
+    Notification.permission ===
+      "granted"
+  ){
+
+    new Notification(
+      `TRADNEX ${symbol} ${direction}`,
+      {
+        body:
+          `New genuine ${direction} signal confirmed by the TRADNEX 4H → 15M strategy.`,
+        icon:
+          "/favicon.ico"
+      }
+    );
+
+  }
+
+}
+
+
+async function requestNotifications(){
+
+  if(
+    !("Notification" in window)
+  ){
+
+    return "NOT_SUPPORTED";
+
+  }
+
+
+  if(
+    Notification.permission ===
+    "default"
+  ){
+
+    return await Notification
+      .requestPermission();
+
+  }
+
+
+  return Notification.permission;
+
+}
+
+
+// =========================================================
+// NOTIFICATIONS PAGE
+// =========================================================
+
+function renderNotifications(){
+
+  const section =
+    $("notifications");
+
+  if(!section){
+    return;
+  }
+
+
+  const favorites =
+    getFavorites();
+
+
+  section.innerHTML = `
+
+    <h2>♧ Notifications</h2>
+
+    <div class="reason">
+
+      <strong>
+        LIVE SIGNAL NOTIFICATIONS
+      </strong>
+
+      <p>
+        Select your favorite markets.
+        TRADNEX will notify you when a genuine
+        BUY or SELL signal is received for one
+        of those markets.
+      </p>
+
+      <button
+        id="enableNotifications"
+        style="
+          margin-top:8px;
+          padding:9px 12px;
+          border-radius:5px;
+          border:1px solid #20efa2;
+          background:#091622;
+          color:#20efa2;
+          cursor:pointer;
+        "
+      >
+        ENABLE BROWSER NOTIFICATIONS
+      </button>
+
+      <div
+        id="notificationStatus"
+        style="
+          margin-top:10px;
+          font-size:11px;
+          color:#70869b;
+        "
+      >
+
+        ${
+          "Notification" in window
+            ?
+            "Browser permission: " +
+            Notification.permission
+            :
+            "Browser notifications are not supported."
+        }
+
+      </div>
+
+    </div>
+
+
+    <div class="reason">
+
+      <strong>
+        FAVORITE MARKETS
+      </strong>
+
+      <div
+        style="
+          display:grid;
+          grid-template-columns:
+            repeat(3,1fr);
+          gap:7px;
+          margin-top:10px;
+        "
+      >
+
+        ${
+          instruments
+            .map(
+              item => `
+
+                <button
+                  onclick="
+                    toggleFavorite(
+                      '${item[0]}'
+                    )
+                  "
+                  style="
+                    padding:8px;
+                    border-radius:5px;
+                    border:1px solid ${
+                      favorites.includes(
+                        item[0]
+                      )
+                        ? "#20efa2"
+                        : "#163047"
+                    };
+                    background:#081522;
+                    color:${
+                      favorites.includes(
+                        item[0]
+                      )
+                        ? "#20efa2"
+                        : "#8fa6bc"
+                    };
+                    cursor:pointer;
+                  "
+                >
+
+                  ${
+                    favorites.includes(
+                      item[0]
+                    )
+                      ? "★"
+                      : "☆"
+                  }
+
+                  ${item[0]}
+
+                </button>
+
+              `
+            )
+            .join("")
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  const enable =
+    $("enableNotifications");
+
+
+  if(enable){
+
+    enable.onclick =
+      async () => {
+
+        const permission =
+          await requestNotifications();
+
+        const status =
+          $("notificationStatus");
+
+        if(status){
+
+          status.textContent =
+            "Browser permission: " +
+            permission;
+
+        }
+
+      };
+
+  }
+
+}
+
+
+// =========================================================
+// BROKER CONNECTION
+// =========================================================
+
+function renderBroker(){
+
+  const section =
+    $("broker");
+
+  if(!section){
+    return;
+  }
+
+
+  const broker =
+    localStorage.getItem(
+      "tradnex_broker"
+    ) || "";
+
+
+  section.innerHTML = `
+
+    <h2>🔗 Broker Connection</h2>
+
+    <div class="reason">
+
+      <strong>
+        BROKER CONNECTION
+      </strong>
+
+      <p>
+        ${
+          broker
+            ?
+            "Broker profile: " +
+            broker
+            :
+            "No broker is connected."
+        }
+      </p>
+
+
+      <label
+        style="
+          display:block;
+          margin-top:10px;
+          font-size:10px;
+          color:#70869b;
+        "
+      >
+        BROKER NAME
+      </label>
+
+
+      <input
+        id="brokerName"
+        value="${broker}"
+        placeholder="Broker name"
+        style="
+          width:100%;
+          margin-top:5px;
+          padding:9px;
+          background:#081522;
+          color:#eaf2ff;
+          border:1px solid #163047;
+          border-radius:5px;
+        "
+      >
+
+
+      <button
+        id="saveBroker"
+        style="
+          margin-top:10px;
+          padding:9px 12px;
+          border-radius:5px;
+          border:1px solid #20efa2;
+          background:#091622;
+          color:#20efa2;
+          cursor:pointer;
+        "
+      >
+        SAVE BROKER PROFILE
+      </button>
+
+    </div>
+
+
+    <div class="warning">
+
+      Saving a broker profile does NOT connect
+      an API or place trades.
+
+      <br><br>
+
+      Actual automated execution requires a
+      supported broker API integration.
+
+    </div>
+
+  `;
+
+
+  $("saveBroker").onclick =
+    () => {
+
+      const value =
+        $("brokerName")
+          .value
+          .trim();
+
+
+      if(value){
+
+        localStorage.setItem(
+          "tradnex_broker",
+          value
+        );
+
+      }else{
+
+        localStorage.removeItem(
+          "tradnex_broker"
+        );
+
+      }
+
+
+      renderBroker();
+
+    };
+
+}
+
+
+// =========================================================
+// AUTO TRADING
+// =========================================================
+
+function renderAutoTrading(){
+
+  const section =
+    $("auto");
+
+  if(!section){
+    return;
+  }
+
+
+  const broker =
+    localStorage.getItem(
+      "tradnex_broker"
+    );
+
+
+  const enabled =
+    localStorage.getItem(
+      "tradnex_auto_trading"
+    ) === "true";
+
+
+  section.innerHTML = `
+
+    <h2>⚙ Auto Trading</h2>
+
+    <div class="reason">
+
+      <strong>
+        AUTO TRADING:
+        ${
+          enabled
+            ? "ARMED"
+            : "OFF"
+        }
+      </strong>
+
+
+      <p>
+
+        TRADNEX will not claim to execute
+        orders until an actual supported
+        broker API is connected.
+
+      </p>
+
+
+      <button
+        id="autoToggle"
+        ${
+          broker
+            ? ""
+            : "disabled"
+        }
+        style="
+          padding:9px 12px;
+          border-radius:5px;
+          border:1px solid ${
+            broker
+              ? "#20efa2"
+              : "#163047"
+          };
+          background:#091622;
+          color:${
+            broker
+              ? "#20efa2"
+              : "#607991"
+          };
+          cursor:pointer;
+        "
+      >
+
+        ${
+          enabled
+            ? "TURN AUTO TRADING OFF"
+            : "ARM AUTO TRADING"
+        }
+
+      </button>
+
+
+      <div
+        style="
+          margin-top:10px;
+          font-size:11px;
+          color:#70869b;
+        "
+      >
+
+        Broker:
+        ${
+          broker ||
+          "NOT CONNECTED"
+        }
+
+      </div>
+
+    </div>
+
+
+    <div class="warning">
+
+      Auto Trading is an execution feature.
+      It must remain disabled until a real
+      broker API integration is configured.
+
+    </div>
+
+  `;
+
+
+  const button =
+    $("autoToggle");
+
+
+  if(
+    button &&
+    broker
+  ){
+
+    button.onclick =
+      () => {
+
+        localStorage.setItem(
+          "tradnex_auto_trading",
+          String(!enabled)
+        );
+
+        renderAutoTrading();
+
+      };
+
+  }
+
+}
+
+
+// =========================================================
+// SETTINGS
+// =========================================================
+
+function renderSettings(){
+
+  const section =
+    $("settings");
+
+  if(!section){
+    return;
+  }
+
+
+  section.innerHTML = `
+
+    <h2>⚙ Settings</h2>
+
+    <div class="reason">
+
+      <strong>
+        DASHBOARD SETTINGS
+      </strong>
+
+
+      <label
+        style="
+          display:block;
+          margin-top:12px;
+          font-size:10px;
+          color:#70869b;
+        "
+      >
+        DEFAULT MARKET
+      </label>
+
+
+      <select
+        id="defaultMarket"
+        style="
+          width:100%;
+          margin-top:5px;
+          padding:9px;
+          background:#081522;
+          color:#eaf2ff;
+          border:1px solid #163047;
+          border-radius:5px;
+        "
+      >
+
+        ${
+          instruments
+            .map(
+              item => `
+
+                <option
+                  value="${item[0]}"
+                  ${
+                    item[0] === selected
+                      ? "selected"
+                      : ""
+                  }
+                >
+                  ${item[0]}
+                </option>
+
+              `
+            )
+            .join("")
+        }
+
+      </select>
+
+
+      <button
+        id="saveSettings"
+        style="
+          margin-top:10px;
+          padding:9px 12px;
+          border-radius:5px;
+          border:1px solid #20efa2;
+          background:#091622;
+          color:#20efa2;
+          cursor:pointer;
+        "
+      >
+        SAVE SETTINGS
+      </button>
+
+
+      <div
+        style="
+          margin-top:14px;
+          font-size:11px;
+          color:#70869b;
+        "
+      >
+
+        Strategy:
+        <strong>
+          TRADNEX 4H → 15M
+        </strong>
+
+        <br><br>
+
+        No 5M timeframe.
+
+        <br>
+
+        No FRVP / POC.
+
+        <br>
+
+        No traditional swing BOS.
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  $("saveSettings").onclick =
+    () => {
+
+      const value =
+        $("defaultMarket").value;
+
+
+      selected = value;
+
+
+      localStorage.setItem(
+        "tradnex_selected",
+        selected
+      );
+
+
+      renderMarkets();
+
+      renderInstruments();
+
+      loadSignal();
+
+
+      showSection(
+        "settings",
+        document.querySelector(
+          '.nav button[onclick*="settings"]'
+        )
+      );
+
+    };
+
+}
+
+
+// =========================================================
+// LIVE SCANNER
 // =========================================================
 
 async function loadLiveScanner(){
 
-  const box = $("liveSignalDetails");
+  const box =
+    $("liveSignalDetails");
 
-  if(!box){
+
+  if(
+    !box ||
+    scannerBusy
+  ){
+
     return;
+
   }
+
+
+  scannerBusy =
+    true;
+
 
   box.innerHTML =
     "Connecting to the TRADNEX live scanner...";
+
 
   try{
 
@@ -1405,6 +2750,7 @@ async function loadLiveScanner(){
         }
       );
 
+
     if(!response.ok){
 
       throw new Error(
@@ -1414,37 +2760,35 @@ async function loadLiveScanner(){
 
     }
 
+
     const data =
       await response.json();
 
+
     const results =
-      Array.isArray(data.results)
+      Array.isArray(
+        data.results
+      )
         ? data.results
         : [];
 
-    // Convert dashboard symbol to scanner symbol
-    const scannerSymbol =
-      selected === "XAUUSD"
-        ? "XAU/USD"
-        : selected === "BTCUSD"
-        ? "BTC/USD"
-        : selected.length === 6
-        ? selected.substring(0,3) +
-          "/" +
-          selected.substring(3)
-        : selected;
+
+    const target =
+      databaseSymbol(
+        selected
+      );
+
 
     const market =
       results.find(
         item =>
           item &&
-          item.symbol === scannerSymbol
+          item.symbol === target
       );
 
-    if(
-      !market ||
-      !market.signal
-    ){
+
+    // Selected market was not scanned
+    if(!market){
 
       box.innerHTML = `
 
@@ -1452,95 +2796,224 @@ async function loadLiveScanner(){
           ${selected}
         </strong>
 
-        <div style="margin-top:8px;">
-          NO NEW SIGNAL
+
+        <div
+          style="
+            margin-top:8px;
+            font-size:22px;
+            font-weight:900;
+          "
+        >
+          WAITING FOR NEXT SCAN
         </div>
 
-        <div style="margin-top:8px;">
-          The TRADNEX scanner is live.
-          This market has no confirmed
-          4H → 15M signal in the current
-          scanner rotation.
+
+        <div
+          style="
+            margin-top:8px;
+          "
+        >
+
+          The TRADNEX scanner is live,
+          but ${selected} was not included
+          in this scanner rotation.
+
         </div>
 
-        <div style="
-          margin-top:10px;
-          font-size:10px;
-          color:#607991;
-        ">
-          Scanner rotation:
-          ${data.rotation || "—"}
+
+        <div
+          style="
+            margin-top:10px;
+            font-size:10px;
+            color:#607991;
+          "
+        >
+
+          Rotation:
+          ${
+            data.rotation ||
+            "—"
+          }
+
         </div>
 
       `;
 
       return;
+
     }
 
+
+    // Market was scanned but no signal
+    if(!market.signal){
+
+      box.innerHTML = `
+
+        <strong>
+          ${selected}
+        </strong>
+
+
+        <div
+          style="
+            margin-top:8px;
+            font-size:22px;
+            font-weight:900;
+          "
+        >
+          NO CONFIRMED SIGNAL
+        </div>
+
+
+        <div
+          style="
+            margin-top:8px;
+          "
+        >
+
+          ${selected} was scanned
+          successfully.
+
+          <br><br>
+
+          No genuine
+          4H → 15M confirmation
+          is currently present.
+
+        </div>
+
+
+        <div
+          style="
+            margin-top:10px;
+            font-size:10px;
+            color:#607991;
+          "
+        >
+
+          Rotation:
+          ${
+            data.rotation ||
+            "—"
+          }
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    // Genuine scanner signal
     const signal =
       market.signal;
 
+
     const direction =
       String(
-        signal.direction || ""
+        signal.direction ||
+        ""
       ).toUpperCase();
+
 
     const directionClass =
       direction === "BUY"
         ? "buy"
-        : direction === "SELL"
+        :
+      direction === "SELL"
         ? "sell"
-        : "neutral";
+        :
+        "neutral";
+
 
     box.innerHTML = `
 
-      <div style="
-        font-size:22px;
-        font-weight:900;
-        margin-bottom:10px;
-      ">
-        ${market.symbol || selected}
+      <div
+        style="
+          font-size:22px;
+          font-weight:900;
+        "
+      >
+        ${selected}
       </div>
 
-      <div class="${directionClass}"
+
+      <div
+        class="${directionClass}"
         style="
           font-size:30px;
           font-weight:900;
-          margin-bottom:12px;
-        ">
+          margin:12px 0;
+        "
+      >
         ${direction}
       </div>
 
+
       <div class="signal-grid">
 
-        <div class="metric">
-          <small>ENTRY</small>
-          <strong>
-            ${signal.entry ?? "—"}
-          </strong>
-        </div>
 
         <div class="metric">
-          <small>CONFIDENCE</small>
+
+          <small>
+            ENTRY
+          </small>
+
           <strong>
             ${
-              signal.confidence != null
-                ? Number(
-                    signal.confidence
-                  ).toFixed(0) + "%"
-                : "—"
+              signal.entry ??
+              "—"
             }
           </strong>
+
         </div>
+
 
         <div class="metric">
-          <small>STATUS</small>
+
+          <small>
+            CONFIDENCE
+          </small>
+
           <strong>
-            ${signal.status || "ACTIVE"}
+
+            ${
+              signal.confidence != null
+                ?
+                Number(
+                  signal.confidence
+                ).toFixed(0) + "%"
+                :
+                "—"
+            }
+
           </strong>
+
         </div>
 
+
+        <div class="metric">
+
+          <small>
+            STATUS
+          </small>
+
+          <strong>
+
+            ${
+              signal.status ||
+              "ACTIVE"
+            }
+
+          </strong>
+
+        </div>
+
+
       </div>
+
 
       <div class="reason">
 
@@ -1548,31 +3021,39 @@ async function loadLiveScanner(){
           TRADNEX SIGNAL REASON
         </strong>
 
+
         <p>
+
           ${
             signal.signal_reason ||
-            signal.setup ||
             signal.message ||
             "4H → 15M confirmation."
           }
+
         </p>
 
       </div>
 
-      <div style="
-        margin-top:10px;
-        font-size:10px;
-        color:#607991;
-      ">
+
+      <div
+        style="
+          margin-top:10px;
+          font-size:10px;
+          color:#607991;
+        "
+      >
+
         SIGNAL TIME:
+
         ${
           market.signalTime ||
-          signal.created_at ||
           "—"
         }
+
       </div>
 
     `;
+
 
   }catch(error){
 
@@ -1581,214 +3062,356 @@ async function loadLiveScanner(){
       error
     );
 
+
     box.innerHTML = `
 
       <strong>
         SCANNER CONNECTION ERROR
       </strong>
 
-      <div style="margin-top:8px;">
-        ${error.message}
+
+      <div
+        style="
+          margin-top:8px;
+        "
+      >
+
+        ${
+          error.message
+        }
+
       </div>
 
     `;
 
+
+  }finally{
+
+    scannerBusy =
+      false;
+
   }
 
 }
-function showSection(id,button){
 
-document
-.querySelectorAll(".main > section")
-.forEach(section=>{
-section.style.display="none";
-});
 
-const section=$(id);
+// =========================================================
+// NAVIGATION
+// =========================================================
 
-if(section)
-section.style.display =
-id==="dashboard"
-?"grid"
-:"block";
+function showSection(
+  id,
+  button
+){
 
-document
-.querySelectorAll(".nav button")
-.forEach(b=>{
-b.classList.remove("active");
-});
+  document
+    .querySelectorAll(
+      ".main > section"
+    )
+    .forEach(
+      section => {
 
-if(button)
-button.classList.add("active");
+        section.style.display =
+          "none";
 
-if(id === "signals"){
-  loadLiveScanner();
+      }
+    );
+
+
+  const section =
+    $(id);
+
+
+  if(section){
+
+    section.style.display =
+      id === "dashboard"
+        ? "grid"
+        : "block";
+
+  }
+
+
+  document
+    .querySelectorAll(
+      ".nav button"
+    )
+    .forEach(
+      b => {
+
+        b.classList.remove(
+          "active"
+        );
+
+      }
+    );
+
+
+  if(button){
+
+    button.classList.add(
+      "active"
+    );
+
+  }
+
+
+  if(id === "dashboard"){
+
+    loadSignal();
+
+    loadRecent();
+
+  }
+
+
+  if(id === "signals"){
+
+    loadLiveScanner();
+
+  }
+
+
+  if(id === "history"){
+
+    loadHistory();
+
+  }
+
+
+  if(id === "performance"){
+
+    loadPerformance();
+
+  }
+
+
+  if(id === "notifications"){
+
+    renderNotifications();
+
+  }
+
+
+  if(id === "broker"){
+
+    renderBroker();
+
+  }
+
+
+  if(id === "auto"){
+
+    renderAutoTrading();
+
+  }
+
+
+  if(id === "settings"){
+
+    renderSettings();
+
+  }
+
 }
 
-}
 
+// =========================================================
+// USER / SUBSCRIPTION
+// =========================================================
 
 async function loadUser(){
 
-  try {
+  try{
 
     const {
       data: {
         user
       }
-    } = await sb.auth.getUser();
+    } =
+      await sb.auth.getUser();
 
-    if (!user) {
-      window.TRADNEX_PLAN = "FREE";
+
+    if(!user){
+
+      window.TRADNEX_PLAN =
+        "FREE";
+
       return;
 
-
-}
-
-    // Display user information
-    $("#username").textContent =
-      user.email || "Trader";
-
-    $("#avatar").textContent =
-      (user.email || "T").charAt(0).toUpperCase();
+    }
 
 
-    // Get the user's latest subscription
+    $("username")
+      .textContent =
+      user.email ||
+      "Trader";
+
+
+    $("avatar")
+      .textContent =
+      (
+        user.email ||
+        "T"
+      )
+      .charAt(0)
+      .toUpperCase();
+
+
     const {
       data: subscription,
       error
-    } = await sb
-      .from("subscriptions")
-      .select("id,user_id,plan,started_at,expires_at,created_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    } =
+      await sb
+        .from(
+          "subscriptions"
+        )
+        .select(
+          "id,user_id,plan,started_at,expires_at,created_at"
+        )
+        .eq(
+          "user_id",
+          user.id
+        )
+        .order(
+          "created_at",
+          {
+            ascending:false
+          }
+        )
+        .limit(1)
+        .maybeSingle();
 
 
-    if (error) {
+    if(
+      error ||
+      !subscription
+    ){
 
-      console.error(
-        "Subscription lookup failed:",
-        error
-      );
+      window.TRADNEX_PLAN =
+        "FREE";
 
-      window.TRADNEX_PLAN = "FREE";
+    }else{
 
-      return;
-    }
-
-
-    // No subscription = FREE
-    if (!subscription) {
-
-      window.TRADNEX_PLAN = "FREE";
-
-      return;
-    }
-
-
-    const plan =
-      String(subscription.plan || "")
+      const plan =
+        String(
+          subscription.plan ||
+          ""
+        )
         .trim()
         .toUpperCase();
 
-    const expiresAt =
-      subscription.expires_at
-        ? new Date(subscription.expires_at)
-        : null;
+
+      const expires =
+        subscription.expires_at
+          ?
+          new Date(
+            subscription.expires_at
+          )
+          :
+          null;
 
 
-    // Paid plan must be valid and not expired
-    const activePaidPlan =
-      (plan === "PRO" || plan === "PREMIUM") &&
-      expiresAt &&
-      expiresAt.getTime() > Date.now();
+      const paid =
+        (
+          plan === "PRO" ||
+          plan === "PREMIUM"
+        ) &&
+        expires &&
+        expires.getTime()
+          > Date.now();
 
 
-    if (activePaidPlan) {
-
-      window.TRADNEX_PLAN = plan;
-
-    } else {
-
-      window.TRADNEX_PLAN = "FREE";
+      window.TRADNEX_PLAN =
+        paid
+          ? plan
+          : "FREE";
 
     }
-const planBadge = $("#planBadge");
 
-if (planBadge) {
 
-  planBadge.textContent =
-    window.TRADNEX_PLAN + " PLAN";
+    $("planBadge")
+      .textContent =
+      window.TRADNEX_PLAN +
+      " PLAN";
 
-}
 
-    console.log(
-      "TRADNEX subscription:",
-      window.TRADNEX_PLAN
-    );
-
-  } catch (error) {
+  }catch(error){
 
     console.error(
       "User loading failed:",
       error
     );
 
-    window.TRADNEX_PLAN = "FREE";
+    window.TRADNEX_PLAN =
+      "FREE";
 
   }
 
 }
+
+
+// =========================================================
+// SUPABASE REALTIME
+// =========================================================
 
 sb
-.channel("tradnex-live-signals")
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"signals"
-},
-payload=>{
+  .channel(
+    "tradnex-live-signals"
+  )
+  .on(
+    "postgres_changes",
+    {
+      event:"*",
+      schema:"public",
+      table:"signals"
+    },
+    payload => {
 
-if (
-  payload.new &&
-  payload.new.symbol === selected
-) {
-  const direction = String(
-    payload.new.direction || ""
-  ).toUpperCase();
+      if(payload.new){
 
-  const status = String(
-    payload.new.status || ""
-  ).toUpperCase();
+        const symbol =
+          dashboardSymbol(
+            payload.new.symbol
+          );
 
-  if (
-    (direction === "BUY" || direction === "SELL") &&
-    status !== "NO_SIGNAL"
-  ) {
-    checkFavoriteSignal(payload.new);
-  }
 
-  loadSignal();
-}
+        notifyFavoriteSignal(
+          payload.new
+        );
 
-loadRecent();
 
-}
-)
-.subscribe();
+        if(
+          symbol === selected
+        ){
 
+          loadSignal();
+
+        }
+
+      }
+
+
+      loadRecent();
+
+    }
+  )
+  .subscribe();
+
+
+// =========================================================
+// INITIAL LOAD
+// =========================================================
 
 renderMarkets();
-renderInstruments();
-loadUser();
-loadSignal();
-loadRecent();
 
-</script>
+renderInstruments();
+
+loadUser();
+
+loadSignal();
+
+loadRecent();
 
 </body>
 </html>
