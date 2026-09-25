@@ -12,7 +12,7 @@
 
 body{
 margin:0;
-background:#050b14;
+background:#050b14;F
 color:#eaf2ff;
 font-family:Arial,Helvetica,sans-serif;
 }
@@ -1136,7 +1136,100 @@ confidence != null && confidence < 60
 
 }
 
+// =========================================================
+// TRADNEX FAVORITE SIGNAL NOTIFICATIONS
+// =========================================================
 
+let lastFavoriteSignalKey = null;
+
+async function checkFavoriteSignal() {
+  if (!selected) return;
+
+  try {
+    const response = await fetch(
+      `/api/scanner?favorite=${encodeURIComponent(selected)}&t=${Date.now()}`
+    );
+
+    if (!response.ok) return;
+
+    const data = await response.json();
+
+    const results = Array.isArray(data.results)
+      ? data.results
+      : [];
+
+    const market = results.find(
+      item => item.symbol === selected
+    );
+
+    if (!market || !market.signal) return;
+
+    const signal = market.signal;
+
+    const direction =
+      String(
+        signal.direction ||
+        market.direction ||
+        ""
+      ).toUpperCase();
+
+    if (
+      direction !== "BUY" &&
+      direction !== "SELL"
+    ) {
+      return;
+    }
+
+    const signalTime =
+      signal.signalTime ||
+      signal.time ||
+      market.completed15MTime ||
+      "";
+
+    const signalKey =
+      `${selected}-${direction}-${signalTime}`;
+
+    // Prevent the same signal from notifying repeatedly
+    if (signalKey === lastFavoriteSignalKey) {
+      return;
+    }
+
+    lastFavoriteSignalKey = signalKey;
+
+    // Ask permission only when a real signal is found
+    if (
+      "Notification" in window &&
+      Notification.permission === "default"
+    ) {
+      await Notification.requestPermission();
+    }
+
+    if (
+      "Notification" in window &&
+      Notification.permission === "granted"
+    ) {
+      new Notification(
+        `TRADNEX: ${selected} ${direction}`,
+        {
+          body:
+            `New ${direction} signal confirmed on ${selected} using the TRADNEX 4H → 15M strategy.`,
+          icon:
+            "/favicon.ico"
+        }
+      );
+    }
+
+    console.log(
+      `TRADNEX favorite signal: ${selected} ${direction}`
+    );
+
+  } catch (error) {
+    console.error(
+      "Favorite signal notification error:",
+      error
+    );
+  }
+}
 async function loadSignal(){
 
 const {data,error} =
@@ -1394,13 +1487,26 @@ table:"signals"
 },
 payload=>{
 
-if(
-payload.new &&
-payload.new.symbol===selected
-){
+if (
+  payload.new &&
+  payload.new.symbol === selected
+) {
+  const direction = String(
+    payload.new.direction || ""
+  ).toUpperCase();
 
-loadSignal();
+  const status = String(
+    payload.new.status || ""
+  ).toUpperCase();
 
+  if (
+    (direction === "BUY" || direction === "SELL") &&
+    status !== "NO_SIGNAL"
+  ) {
+    checkFavoriteSignal(payload.new);
+  }
+
+  loadSignal();
 }
 
 loadRecent();
