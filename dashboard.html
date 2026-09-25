@@ -1286,29 +1286,36 @@ function checkFavoriteSignal(signalData) {
 }
 async function loadSignal(){
 
-const {data,error} =
-await sb
-.from("signals")
-.select("*")
-.eq("symbol",selected)
-.in("status",["ACTIVE","MONITORING"])
-.order("created_at",{ascending:false})
-.limit(1)
-.maybeSingle();
+  const {data,error} =
+    await sb
+      .from("signals")
+      .select("*")
+      .eq("symbol", selected)
+      .in("status", [
+        "ACTIVE",
+        "MONITORING"
+      ])
+      .order("created_at", {
+        ascending:false
+      })
+      .limit(1)
+      .maybeSingle();
 
-if(error){
+  if(error){
 
-console.error(error);
+    console.error(
+      "Signal loading failed:",
+      error
+    );
 
-renderSignal(null);
+    renderSignal(null);
 
-return;
+    return;
+  }
 
-}
+  renderSignal(data);
 
-renderSignal(data);
 
-}
 
 
 async function loadRecent(){
