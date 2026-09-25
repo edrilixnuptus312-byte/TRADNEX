@@ -1142,7 +1142,61 @@ confidence != null && confidence < 60
 
 let lastFavoriteSignalKey = null;
 
-async function checkFavoriteSignal() {
+function checkFavoriteSignal(signalData) {
+  if (!signalData || !selected) return;
+
+  const direction = String(
+    signalData.direction || ""
+  ).toUpperCase();
+
+  if (
+    direction !== "BUY" &&
+    direction !== "SELL"
+  ) {
+    return;
+  }
+
+  const signalTime =
+    signalData.signalTime ||
+    signalData.created_at ||
+    signalData.createdAt ||
+    "";
+
+  const signalKey =
+    `${selected}-${direction}-${signalTime}`;
+
+  // Prevent duplicate notifications
+  if (signalKey === lastFavoriteSignalKey) {
+    return;
+  }
+
+  lastFavoriteSignalKey = signalKey;
+
+  if (
+    "Notification" in window &&
+    Notification.permission === "default"
+  ) {
+    Notification.requestPermission();
+  }
+
+  if (
+    "Notification" in window &&
+    Notification.permission === "granted"
+  ) {
+    new Notification(
+      `TRADNEX: ${selected} ${direction}`,
+      {
+        body:
+          `New ${direction} signal confirmed on ${selected} using the TRADNEX 4H → 15M strategy.`,
+        icon: "/favicon.ico"
+      }
+    );
+  }
+
+  console.log(
+    `TRADNEX favorite signal: ${selected} ${direction}`
+  );
+}
   if (!selected) return;
 
   try {
