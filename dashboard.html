@@ -1379,7 +1379,223 @@ async function loadRecent(){
     ).join("");
 
 }
+// =========================================================
+// TRADNEX LIVE SCANNER CONNECTION
+// =========================================================
 
+async function loadLiveScanner(){
+
+  const box = $("liveSignalDetails");
+
+  if(!box){
+    return;
+  }
+
+  box.innerHTML =
+    "Connecting to the TRADNEX live scanner...";
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/scanner?fresh=" +
+        Date.now(),
+        {
+          cache:"no-store"
+        }
+      );
+
+    if(!response.ok){
+
+      throw new Error(
+        "Scanner returned HTTP " +
+        response.status
+      );
+
+    }
+
+    const data =
+      await response.json();
+
+    const results =
+      Array.isArray(data.results)
+        ? data.results
+        : [];
+
+    // Convert dashboard symbol to scanner symbol
+    const scannerSymbol =
+      selected === "XAUUSD"
+        ? "XAU/USD"
+        : selected === "BTCUSD"
+        ? "BTC/USD"
+        : selected.length === 6
+        ? selected.substring(0,3) +
+          "/" +
+          selected.substring(3)
+        : selected;
+
+    const market =
+      results.find(
+        item =>
+          item &&
+          item.symbol === scannerSymbol
+      );
+
+    if(
+      !market ||
+      !market.signal
+    ){
+
+      box.innerHTML = `
+
+        <strong>
+          ${selected}
+        </strong>
+
+        <div style="margin-top:8px;">
+          NO NEW SIGNAL
+        </div>
+
+        <div style="margin-top:8px;">
+          The TRADNEX scanner is live.
+          This market has no confirmed
+          4H → 15M signal in the current
+          scanner rotation.
+        </div>
+
+        <div style="
+          margin-top:10px;
+          font-size:10px;
+          color:#607991;
+        ">
+          Scanner rotation:
+          ${data.rotation || "—"}
+        </div>
+
+      `;
+
+      return;
+    }
+
+    const signal =
+      market.signal;
+
+    const direction =
+      String(
+        signal.direction || ""
+      ).toUpperCase();
+
+    const directionClass =
+      direction === "BUY"
+        ? "buy"
+        : direction === "SELL"
+        ? "sell"
+        : "neutral";
+
+    box.innerHTML = `
+
+      <div style="
+        font-size:22px;
+        font-weight:900;
+        margin-bottom:10px;
+      ">
+        ${market.symbol || selected}
+      </div>
+
+      <div class="${directionClass}"
+        style="
+          font-size:30px;
+          font-weight:900;
+          margin-bottom:12px;
+        ">
+        ${direction}
+      </div>
+
+      <div class="signal-grid">
+
+        <div class="metric">
+          <small>ENTRY</small>
+          <strong>
+            ${signal.entry ?? "—"}
+          </strong>
+        </div>
+
+        <div class="metric">
+          <small>CONFIDENCE</small>
+          <strong>
+            ${
+              signal.confidence != null
+                ? Number(
+                    signal.confidence
+                  ).toFixed(0) + "%"
+                : "—"
+            }
+          </strong>
+        </div>
+
+        <div class="metric">
+          <small>STATUS</small>
+          <strong>
+            ${signal.status || "ACTIVE"}
+          </strong>
+        </div>
+
+      </div>
+
+      <div class="reason">
+
+        <strong>
+          TRADNEX SIGNAL REASON
+        </strong>
+
+        <p>
+          ${
+            signal.signal_reason ||
+            signal.setup ||
+            signal.message ||
+            "4H → 15M confirmation."
+          }
+        </p>
+
+      </div>
+
+      <div style="
+        margin-top:10px;
+        font-size:10px;
+        color:#607991;
+      ">
+        SIGNAL TIME:
+        ${
+          market.signalTime ||
+          signal.created_at ||
+          "—"
+        }
+      </div>
+
+    `;
+
+  }catch(error){
+
+    console.error(
+      "TRADNEX scanner connection failed:",
+      error
+    );
+
+    box.innerHTML = `
+
+      <strong>
+        SCANNER CONNECTION ERROR
+      </strong>
+
+      <div style="margin-top:8px;">
+        ${error.message}
+      </div>
+
+    `;
+
+  }
+
+}
 function showSection(id,button){
 
 document
@@ -1404,6 +1620,10 @@ b.classList.remove("active");
 
 if(button)
 button.classList.add("active");
+
+if(id === "signals"){
+  loadLiveScanner();
+}
 
 }
 
