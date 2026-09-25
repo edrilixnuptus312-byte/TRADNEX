@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-
   if (req.method !== "GET") {
     return res.status(405).json({
       error: "Method not allowed"
@@ -7,9 +6,8 @@ export default async function handler(req, res) {
   }
 
   try {
-
     // =========================================================
-    // BUILD THE CURRENT TRADNEX API URL
+    // BUILD CURRENT TRADNEX API URL
     // =========================================================
 
     const protocol =
@@ -22,80 +20,179 @@ export default async function handler(req, res) {
       `${protocol}://${host}`;
 
     // =========================================================
-    // RUN THE OFFICIAL TRADNEX SIGNAL ENGINE
+    // TRADNEX SCANNER SETTINGS
     // =========================================================
     //
-    // signal-engine already contains the official TRADNEX
-    // market universe.
+    // signal-engine already contains the official market list.
     //
-    // We use all=true so scanner does not maintain a second
-    // symbol list.
+    // 4 markets per batch
+    // 2 batches per minute
+    // = maximum 8 Twelve Data credits per minute
+    //
+    // 30 markets = 8 batches
+    // 2 batches/minute = 4-minute full rotation
     //
     // Strategy remains:
     // 4H → 15M
     //
     // =========================================================
 
-    const response = await fetch(
-      `${baseUrl}/api/signal-engine?all=true`
+    const batchSize = 4;
+    const batchesPerMinute = 2;
+    const totalMarkets = 30;
+    const totalBatches = Math.ceil(
+      totalMarkets / batchSize
     );
 
-    let data;
+    // =========================================================
+    // ROTATE THROUGH ALL BATCHES
+    // =========================================================
+    //
+    // Every minute moves to the next pair of batches.
+    //
+    // Minute 0 → batches 0 + 1
+    // Minute 1 → batches 2 + 3
+    // Minute 2 → batches 4 + 5
+    // Minute 3 → batches 6 + 7
+    // Then repeats.
+    //
+    // =========================================================
 
-    try {
-      data = await response.json();
-    } catch {
-      return res.status(502).json({
-        scanner: "TRADNEX LIVE SCANNER",
-        error: "Invalid response from signal engine"
-      });
+    const minuteNumber =
+      Math.floor(Date.now() / 60000);
+
+    const windowNumber =
+      minuteNumber % Math.ceil(
+        totalBatches / batchesPerMinute
+      );
+
+    const firstBatch =
+      windowNumber * batchesPerMinute;
+
+    const batchNumbers = [];
+
+    for (
+      let i = 0;
+      i < batchesPerMinute;
+      i++
+    ) {
+      const batchNumber =
+        firstBatch + i;
+
+      if (batchNumber < totalBatches) {
+        batchNumbers.push(batchNumber);
+      }
     }
 
     // =========================================================
-    // SIGNAL ENGINE ERROR
+    // SCAN BATCHES SEQUENTIALLY
+    // =========================================================
+    //
+    // Sequential requests prevent accidental bursts.
+    //
+    // Each batch contains only 4 markets.
+    //
     // =========================================================
 
-    if (!response.ok) {
-      return res.status(response.status).json({
-        scanner: "TRADNEX LIVE SCANNER",
-        strategy: "TRADNEX 4H → 15M",
-        status: "ERROR",
-        error: "Signal engine request failed",
-        details: data
-      });
+    const allResults = [];
+    const batchReports = [];
+
+    for (const batchNumber of batchNumbers) {
+      try {
+        const response = await fetch(
+          `${baseUrl}/api/signal-engine?all=true&batch=${batchNumber}`
+        );
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {
+            error: "Invalid JSON response"
+          };
+        }
+
+        if (!response.ok) {
+          batchReports.push({
+            batch: batchNumber,
+            status: "ERROR",
+            details: data
+          });
+
+          continue;
+        }
+
+        const results =
+          Array.isArray(data.results)
+            ? data.results
+            : [];
+
+        allResults.push(...results);
+
+        batchReports.push({
+          batch: batchNumber,
+          status: "OK",
+          scanned:
+            data.scanned ?? results.length,
+          signalsCreated:
+            data.signalsCreated ?? 0,
+          noSignal:
+            data.noSignal ?? results.length
+        });
+
+      } catch (error) {
+        batchReports.push({
+          batch: batchNumber,
+          status: "ERROR",
+          error: error.message
+        });
+      }
     }
 
     // =========================================================
-    // READ MARKET RESULTS
+    // REMOVE ACCIDENTAL DUPLICATES
     // =========================================================
 
-    const results =
-      Array.isArray(data.results)
-        ? data.results
-        : [];
+    const uniqueMarkets =
+      Array.from(
+        new Map(
+          allResults.map(item => [
+            item.symbol,
+            item
+          ])
+        ).values()
+      );
 
     // =========================================================
-    // ONLY RETURN ACTUALLY CREATED SIGNALS
+    // ONLY REAL SIGNALS
     // =========================================================
     //
     // No demo signals.
-    // No generated/fake signals.
-    //
-    // A signal must have been created by the real signal engine.
+    // No generated signals.
+    // No fake signals.
     //
     // =========================================================
 
     const liveSignals =
-      results.filter(
+      uniqueMarkets.filter(
         item =>
           item &&
-          item.status === "SIGNAL_CREATED" &&
+          (
+            item.status === "SIGNAL_CREATED" ||
+            item.signal
+          ) &&
           item.signal
       );
 
     // =========================================================
-    // FINAL SCANNER RESPONSE
+    // RESPONSE
     // =========================================================
+
+    res.setHeader(
+      "Cache-Control",
+      "s-maxage=60, stale-while-revalidate=30"
+    );
 
     return res.status(200).json({
 
@@ -110,8 +207,17 @@ export default async function handler(req, res) {
           ? "SIGNALS_FOUND"
           : "NO_SIGNALS",
 
-      scanned:
-        data.scanned ?? results.length,
+      rotation:
+        `${windowNumber + 1}/4`,
+
+      batches:
+        batchNumbers,
+
+      marketsScanned:
+        uniqueMarkets.length,
+
+      totalMarkets:
+        totalMarkets,
 
       signalsFound:
         liveSignals.length,
@@ -120,7 +226,16 @@ export default async function handler(req, res) {
         liveSignals,
 
       markets:
-        results,
+        uniqueMarkets,
+
+      batchReports:
+
+        batchReports,
+
+      nextRotationInSeconds:
+        60 - (
+          Math.floor(Date.now() / 1000) % 60
+        ),
 
       timestamp:
         new Date().toISOString()
@@ -144,7 +259,5 @@ export default async function handler(req, res) {
         error.message
 
     });
-
   }
-
 }
